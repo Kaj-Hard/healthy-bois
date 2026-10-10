@@ -1,0 +1,39 @@
+{
+  "name": "healthy-bois",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Offline local scorekeeping for games with the bois",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run",
+    "android:sync": "npm run build && cap sync android",
+    "android:apk": "node scripts/build-apk.mjs",
+    "serve:apk": "node scripts/serve-apk.mjs"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/preferences": "^8.0.1",
+    "@fontsource-variable/nunito": "^5.3.0",
+    "canvas-confetti": "^1.9.4",
+    "motion": "^14.1.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zustand": "^5.0.15"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.3",
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3"
+  }
+}

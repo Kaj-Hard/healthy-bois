@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Healthy Bois launcher foreground: a steel boule and a butter-yellow jack. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#336E4FD6"
+        android:pathData="M33,75a17,3.5 0,1 0,34 0a17,3.5 0,1 0,-34 0z" />
+    <path android:pathData="M30,52a20,20 0,1 0,40 0a20,20 0,1 0,-40 0z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:type="radial"
+                android:centerX="43"
+                android:centerY="44"
+                android:gradientRadius="31">
+                <item android:offset="0" android:color="#FFFFFFFF" />
+                <item android:offset="0.3" android:color="#FFE3E7EF" />
+                <item android:offset="0.78" android:color="#FFA9B0C0" />
+                <item android:offset="1" android:color="#FF7D8496" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:strokeColor="#996F7688"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M31.5,48 Q50,59 68.5,44" />
+    <path
+        android:strokeColor="#996F7688"
+        android:strokeWidth="1.7"
+        android:strokeLineCap="round"
+        android:pathData="M30.5,55.5 Q50,67 69.5,51.5" />
+    <path
+        android:fillColor="#B3FFFFFF"
+        android:pathData="M38,42a5,3 0,1 0,10 0a5,3 0,1 0,-10 0z" />
+    <path
+        android:fillColor="#FFD19F1C"
+        android:pathData="M63,70a6,6 0,1 0,12 0a6,6 0,1 0,-12 0z" />
+    <path
+        android:fillColor="#FFFFD45C"
+        android:pathData="M63,69.3a6,5.3 0,1 0,12 0a6,5.3 0,1 0,-12 0z" />
+    <path
+        android:fillColor="#CCFFFFFF"
+        android:pathData="M65.5,67a1.6,1.6 0,1 0,3.2 0a1.6,1.6 0,1 0,-3.2 0z" />
+</vector>
