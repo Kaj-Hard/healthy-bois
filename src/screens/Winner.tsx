@@ -112,7 +112,7 @@ export function Winner({ matchId }: { matchId: string }) {
 
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ ...bouncy, delay: 0.4 }} style={{ marginTop: 14, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
         <AvatarStack players={winners} size={72} />
-        <p style={{ fontSize: 26, fontWeight: 900 }}>{winners.map((p) => p?.name).join(' & ')}</p>
+        <p style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 900 }}>{winners.map((p) => p?.name).join(' & ')}</p>
       </motion.div>
 
       {!match.photo && (
@@ -135,7 +135,7 @@ export function Winner({ matchId }: { matchId: string }) {
           transition={{ ...bouncy, delay: 0.9 }}
           style={{ marginTop: 16, padding: '10px 18px', borderRadius: 18, background: 'var(--primary)', color: '#fff', boxShadow: '0 5px 0 var(--primary-deep)' }}
         >
-          <div style={{ fontSize: 28, fontWeight: 900 }}>✨ {t('win.flawless')}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 900 }}>✨ {t('win.flawless')}</div>
           <div style={{ fontWeight: 800 }}>{t('win.flawlessSub')}</div>
         </motion.div>
       )}
@@ -147,7 +147,7 @@ export function Winner({ matchId }: { matchId: string }) {
           transition={{ ...bouncy, delay: 0.9 }}
           style={{ marginTop: 16, padding: '10px 18px', borderRadius: 18, background: '#ff8fc7', color: '#fff', boxShadow: '0 5px 0 #d9589a' }}
         >
-          <div style={{ fontSize: 28, fontWeight: 900 }}>💋 {t('win.fanny')}</div>
+          <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 900 }}>💋 {t('win.fanny')}</div>
           <div style={{ fontWeight: 800 }}>
             {t('win.fannySub', {
               names: losersOnZero.flatMap((s) => s.playerIds.map((id) => playersById.get(id)?.name)).join(' & '),

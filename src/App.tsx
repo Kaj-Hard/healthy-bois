@@ -147,6 +147,9 @@ export default function App() {
         <motion.div
           key={key}
           className={`screen ${isTab ? 'with-tabs' : ''}`}
+          // Bespoke skin: games/<id>/skin.css targets [data-skin='<id>']. It lives on the screen (not the root)
+          // so a screen keeps its own look while it animates out.
+          data-skin={themeGameId}
           initial={variants.initial}
           animate={variants.animate}
           exit={variants.exit}
@@ -156,7 +159,9 @@ export default function App() {
         </motion.div>
       </AnimatePresence>
       <AnimatePresence>{isTab && <TabBar key="tabs" current={route.name} />}</AnimatePresence>
-      <Overlays />
+      <div data-skin={themeGameId}>
+        <Overlays />
+      </div>
     </div>
   );
 }

@@ -169,7 +169,7 @@ export function Setup({ gameId }: { gameId: string }) {
                           {m.emoji}
                         </span>
                         <span style={{ flex: 1 }}>
-                          <span style={{ display: 'block', fontSize: 21, fontWeight: 900 }}>{t(m.name)}</span>
+                          <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: 23, fontWeight: 900 }}>{t(m.name)}</span>
                           <span style={{ display: 'block', fontWeight: 800, color: i === 0 ? 'var(--primary-deep)' : 'var(--accent-deep)' }}>{t(m.tagline)}</span>
                         </span>
                       </div>

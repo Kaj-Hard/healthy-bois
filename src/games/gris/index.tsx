@@ -1,3 +1,5 @@
+import '@fontsource/bebas-neue';
+import './skin.css';
 import { useId } from 'react';
 import type { GameDefinition } from '../types';
 import { GrisPlay } from './Play';

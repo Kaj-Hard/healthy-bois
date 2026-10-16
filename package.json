@@ -1,7 +1,7 @@
 {
   "name": "healthy-bois",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "type": "module",
   "description": "Offline local scorekeeping for games with the bois",
   "scripts": {
@@ -20,7 +20,9 @@
     "@capacitor/filesystem": "^8.1.5",
     "@capacitor/haptics": "^8.0.2",
     "@capacitor/preferences": "^8.0.1",
+    "@fontsource-variable/fraunces": "^5.3.0",
     "@fontsource-variable/nunito": "^5.3.0",
+    "@fontsource/bebas-neue": "^5.3.0",
     "canvas-confetti": "^1.9.4",
     "motion": "^14.1.0",
     "react": "^19.3.0",

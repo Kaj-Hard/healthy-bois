@@ -1,0 +1,101 @@
+/*
+ * GRIS skin: a street-football pitch in pastel.
+ * Mowed grass stripes and chalk markings, a dark scoreboard band on top,
+ * condensed sporty capitals, players as kit cards, letters as referee cards.
+ * Scoped to [data-skin='gris'], which App.tsx sets on every GRIS screen and on the overlays.
+ */
+
+[data-skin='gris'] {
+  --font-display: 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
+  --font-label: 'Bebas Neue', Impact, 'Arial Narrow', sans-serif;
+  --gr-board: #0f3b22;
+  --gr-chalk: rgba(255, 255, 255, 0.8);
+  /* Bebas has one weight: never fake-bold it. */
+  font-synthesis: none;
+}
+
+/* mowed stripes + halfway line + centre circle and spot */
+.screen[data-skin='gris'] {
+  background-color: var(--bg);
+  background-image:
+    radial-gradient(circle at 50% 52%, var(--gr-chalk) 0 5px, transparent 6px),
+    radial-gradient(circle at 50% 52%, transparent 0 86px, var(--gr-chalk) 87px 91px, transparent 92px),
+    linear-gradient(180deg, transparent calc(52% - 2px), var(--gr-chalk) calc(52% - 2px) calc(52% + 2px), transparent calc(52% + 2px)),
+    repeating-linear-gradient(180deg, #c4ecd0 0 72px, #b4e4c3 72px 144px);
+}
+
+/* scoreboard band */
+[data-skin='gris'] .topbar {
+  background: var(--gr-board);
+  color: #fff;
+  border-bottom: 4px solid #fff;
+  box-shadow: 0 4px 0 rgba(15, 59, 34, 0.25);
+  margin-bottom: 12px;
+}
+[data-skin='gris'] .topbar h1 {
+  font-weight: 400;
+  font-size: 36px;
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+[data-skin='gris'] .topbar .icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35);
+  color: #fff;
+}
+
+/* sporty, condensed, uppercase everything that shouts */
+[data-skin='gris'] .btn {
+  font-weight: 400;
+  font-size: 27px;
+  letter-spacing: 0.06em;
+  border-radius: 12px;
+  padding-top: 3px;
+}
+[data-skin='gris'] .btn.small {
+  font-size: 20px;
+}
+[data-skin='gris'] .page-title {
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+[data-skin='gris'] .name {
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-skin='gris'] .badge {
+  font-weight: 400;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+[data-skin='gris'] .section-title {
+  font-weight: 400;
+  font-size: 21px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+[data-skin='gris'] .sheet h2 {
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: 0.03em;
+}
+[data-skin='gris'] .card {
+  border-radius: 14px;
+}
+[data-skin='gris'] .bottom-bar {
+  background: linear-gradient(to top, rgba(196, 236, 208, 0.97) 70%, transparent);
+}
+
+/* LED scoreboard text */
+.gr-led {
+  font-family: 'Bebas Neue', Impact, sans-serif;
+  background: #062614;
+  color: #7dff9e;
+  text-shadow: 0 0 8px rgba(61, 255, 122, 0.8);
+  letter-spacing: 0.1em;
+  border-radius: 8px;
+  padding: 5px 12px 3px;
+  box-shadow: inset 0 0 0 2px rgba(125, 255, 158, 0.18);
+}

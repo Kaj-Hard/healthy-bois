@@ -1,3 +1,5 @@
+import '@fontsource-variable/fraunces';
+import './skin.css';
 import { useId } from 'react';
 import type { GameDefinition } from '../types';
 import { sideScore, standings } from '../../lib/match';

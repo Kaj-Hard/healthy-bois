@@ -6,9 +6,12 @@ Offline Android app for scoring local games with friends (React + TypeScript + V
 tap-who → tap-what scoring, undo over confirm, juicy springs, per-game complementary pastel themes. New screens
 and games must follow it. Update it when you introduce a new reusable pattern.
 
+**To add or reskin a game, use the `new-game` skill** (`.claude/skills/new-game/`). Every game has a bespoke visual world
+(`skin.css`, display font, signature components, `sfx.ts`) on top of the shared flow; see DESIGN.md §12.
+
 ## Map
 
-- `src/games/<game>/`: one folder per game (`rules.ts` + tests, `theme.ts`, `index.tsx` definition + SVG art, `Play.tsx`).
+- `src/games/<game>/`: one folder per game (`rules.ts` + tests, `theme.ts`, `skin.css`, `sfx.ts`, `index.tsx` definition + SVG art, `Play.tsx`).
   Registered in `src/games/registry.ts`. Contract: `GameDefinition` in `src/games/types.ts`.
 - `src/components/play.tsx`: shared in-game building blocks (`useRoundActions`, `PointsSheet`, `StarterPicker`, `HistoryStrip`, `TargetPips`).
 - `src/components/ui.tsx`: buttons, sheets, toast/confirm (`useOverlay`), avatars, `RollingNumber`, spring constants.

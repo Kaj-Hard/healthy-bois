@@ -1,0 +1,84 @@
+/*
+ * Petanque skin: a sun-baked Provencal terrain.
+ * Gravel underfoot, a cafe awning overhead, serif numerals like a hand-painted sign.
+ * Scoped to [data-skin='petanque'], which App.tsx sets on every petanque screen and on the overlays.
+ * The gravel tile is a 160px SVG of pebbles, generated once with a seeded RNG.
+ */
+
+[data-skin='petanque'] {
+  --font-display: 'Fraunces Variable', Georgia, serif;
+  --pq-ochre: #f0b43c;
+  --pq-olive: #8a9a4b;
+  --pq-lavender: #a497e0;
+  --pq-cream: #fff8ea;
+  --pq-gravel: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><ellipse cx='0.0' cy='147.3' rx='2.8' ry='1.8' fill='%23bea37b' opacity='0.61' transform='rotate(131 0.0 147.3)'/><ellipse cx='120.3' cy='120.8' rx='3.9' ry='3.3' fill='%23cdb592' opacity='0.57' transform='rotate(114 120.3 120.8)'/><ellipse cx='59.9' cy='113.3' rx='4.5' ry='1.4' fill='%23bea37b' opacity='0.91' transform='rotate(123 59.9 113.3)'/><ellipse cx='129.2' cy='19.7' rx='3.8' ry='4.0' fill='%23fff4df' opacity='0.74' transform='rotate(124 129.2 19.7)'/><ellipse cx='145.9' cy='145.3' rx='3.2' ry='2.2' fill='%23e9d8b9' opacity='0.53' transform='rotate(151 145.9 145.3)'/><ellipse cx='47.6' cy='68.6' rx='2.8' ry='4.0' fill='%23cdb592' opacity='0.89' transform='rotate(100 47.6 68.6)'/><ellipse cx='9.4' cy='43.8' rx='4.0' ry='2.7' fill='%23c8ae86' opacity='0.90' transform='rotate(76 9.4 43.8)'/><ellipse cx='8.8' cy='58.5' rx='3.0' ry='3.2' fill='%23bea37b' opacity='0.53' transform='rotate(166 8.8 58.5)'/><ellipse cx='64.9' cy='45.4' rx='3.1' ry='2.5' fill='%23bea37b' opacity='0.76' transform='rotate(60 64.9 45.4)'/><ellipse cx='37.3' cy='145.0' rx='3.5' ry='3.8' fill='%23fff4df' opacity='0.71' transform='rotate(114 37.3 145.0)'/><ellipse cx='80.8' cy='110.2' rx='5.5' ry='2.4' fill='%23c8ae86' opacity='0.74' transform='rotate(127 80.8 110.2)'/><ellipse cx='56.1' cy='52.9' rx='3.2' ry='3.6' fill='%23d8c19c' opacity='0.86' transform='rotate(158 56.1 52.9)'/><ellipse cx='12.4' cy='65.1' rx='2.2' ry='1.4' fill='%23c8ae86' opacity='0.77' transform='rotate(179 12.4 65.1)'/><ellipse cx='23.1' cy='73.1' rx='4.1' ry='1.6' fill='%23b39874' opacity='0.90' transform='rotate(166 23.1 73.1)'/><ellipse cx='141.6' cy='145.2' rx='4.8' ry='2.0' fill='%23c8ae86' opacity='0.49' transform='rotate(2 141.6 145.2)'/><ellipse cx='0.3' cy='98.7' rx='2.6' ry='3.4' fill='%23fff4df' opacity='0.57' transform='rotate(88 0.3 98.7)'/><ellipse cx='141.1' cy='37.6' rx='3.2' ry='3.9' fill='%23bea37b' opacity='0.45' transform='rotate(21 141.1 37.6)'/><ellipse cx='146.1' cy='101.9' rx='5.5' ry='1.3' fill='%23c8ae86' opacity='0.93' transform='rotate(162 146.1 101.9)'/><ellipse cx='90.4' cy='108.7' rx='2.7' ry='1.9' fill='%23bea37b' opacity='0.48' transform='rotate(38 90.4 108.7)'/><ellipse cx='123.1' cy='112.1' rx='4.6' ry='2.7' fill='%23d8c19c' opacity='0.91' transform='rotate(6 123.1 112.1)'/><ellipse cx='20.9' cy='110.1' rx='5.4' ry='1.3' fill='%23b39874' opacity='0.95' transform='rotate(159 20.9 110.1)'/><ellipse cx='152.7' cy='122.4' rx='3.4' ry='1.9' fill='%23b39874' opacity='0.65' transform='rotate(131 152.7 122.4)'/><ellipse cx='37.6' cy='64.8' rx='5.3' ry='2.9' fill='%23fff4df' opacity='0.82' transform='rotate(63 37.6 64.8)'/><ellipse cx='53.6' cy='116.0' rx='3.4' ry='1.8' fill='%23b39874' opacity='0.95' transform='rotate(56 53.6 116.0)'/><ellipse cx='101.2' cy='139.6' rx='5.5' ry='1.8' fill='%23d8c19c' opacity='0.70' transform='rotate(116 101.2 139.6)'/><ellipse cx='89.2' cy='123.4' rx='5.6' ry='2.6' fill='%23bea37b' opacity='0.53' transform='rotate(34 89.2 123.4)'/><ellipse cx='106.0' cy='83.5' rx='4.0' ry='2.7' fill='%23e9d8b9' opacity='0.83' transform='rotate(136 106.0 83.5)'/><ellipse cx='4.2' cy='47.8' rx='3.9' ry='1.8' fill='%23e9d8b9' opacity='0.57' transform='rotate(130 4.2 47.8)'/><ellipse cx='105.5' cy='68.7' rx='1.9' ry='3.5' fill='%23b39874' opacity='0.91' transform='rotate(148 105.5 68.7)'/><ellipse cx='108.9' cy='153.4' rx='1.7' ry='3.5' fill='%23cdb592' opacity='0.90' transform='rotate(108 108.9 153.4)'/><ellipse cx='5.9' cy='21.8' rx='1.9' ry='1.5' fill='%23d8c19c' opacity='0.75' transform='rotate(15 5.9 21.8)'/><ellipse cx='151.3' cy='30.7' rx='2.2' ry='1.8' fill='%23c8ae86' opacity='0.68' transform='rotate(121 151.3 30.7)'/><ellipse cx='159.0' cy='67.6' rx='4.4' ry='3.5' fill='%23e9d8b9' opacity='0.48' transform='rotate(71 159.0 67.6)'/><ellipse cx='36.8' cy='129.2' rx='5.7' ry='1.7' fill='%23bea37b' opacity='0.51' transform='rotate(167 36.8 129.2)'/><ellipse cx='33.6' cy='96.4' rx='2.3' ry='1.4' fill='%23fff4df' opacity='0.73' transform='rotate(49 33.6 96.4)'/><ellipse cx='76.9' cy='159.0' rx='1.9' ry='2.4' fill='%23d8c19c' opacity='0.45' transform='rotate(57 76.9 159.0)'/><ellipse cx='66.2' cy='14.6' rx='2.6' ry='4.0' fill='%23cdb592' opacity='0.67' transform='rotate(140 66.2 14.6)'/><ellipse cx='136.8' cy='154.0' rx='5.0' ry='3.2' fill='%23e9d8b9' opacity='0.65' transform='rotate(103 136.8 154.0)'/><ellipse cx='79.5' cy='79.2' rx='4.0' ry='3.4' fill='%23fff4df' opacity='0.81' transform='rotate(120 79.5 79.2)'/><ellipse cx='141.5' cy='135.2' rx='5.8' ry='2.5' fill='%23b39874' opacity='0.94' transform='rotate(88 141.5 135.2)'/><ellipse cx='57.2' cy='12.7' rx='3.0' ry='3.8' fill='%23cdb592' opacity='0.93' transform='rotate(128 57.2 12.7)'/><ellipse cx='125.9' cy='33.1' rx='2.6' ry='3.6' fill='%23b39874' opacity='0.85' transform='rotate(19 125.9 33.1)'/><ellipse cx='101.6' cy='113.8' rx='3.9' ry='2.5' fill='%23bea37b' opacity='0.89' transform='rotate(157 101.6 113.8)'/><ellipse cx='43.3' cy='109.9' rx='3.4' ry='2.4' fill='%23fff4df' opacity='0.57' transform='rotate(34 43.3 109.9)'/><ellipse cx='143.8' cy='131.5' rx='3.0' ry='3.2' fill='%23d8c19c' opacity='0.60' transform='rotate(158 143.8 131.5)'/><ellipse cx='147.3' cy='0.2' rx='2.2' ry='2.4' fill='%23fff4df' opacity='0.90' transform='rotate(4 147.3 0.2)'/></svg>");
+}
+
+/* gravel + warm afternoon sun */
+.screen[data-skin='petanque'] {
+  background-color: var(--bg);
+  background-image: radial-gradient(130% 55% at 50% -12%, rgba(255, 205, 110, 0.6), transparent 62%), var(--pq-gravel);
+  background-size: 100% 100%, 160px 160px;
+}
+
+/* cafe awning: stripes with a scalloped valance above every top bar */
+[data-skin='petanque'] .topbar {
+  position: relative;
+  padding-top: calc(var(--safe-top) + 36px);
+  min-height: calc(var(--safe-top) + 88px);
+}
+[data-skin='petanque'] .topbar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: calc(var(--safe-top) + 16px);
+  background: repeating-linear-gradient(90deg, var(--primary) 0 26px, var(--pq-cream) 26px 52px);
+}
+[data-skin='petanque'] .topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--safe-top) + 16px);
+  height: 13px;
+  background:
+    radial-gradient(circle at 13px 0, var(--primary) 12.5px, transparent 13px) 0 0 / 52px 13px repeat-x,
+    radial-gradient(circle at 39px 0, var(--pq-cream) 12.5px, transparent 13px) 0 0 / 52px 13px repeat-x;
+  filter: drop-shadow(0 3px 0 rgba(61, 36, 20, 0.14));
+}
+[data-skin='petanque'] .topbar h1 {
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: -0.01em;
+}
+
+/* hand-painted, a bit more elegant: serif sentence-case buttons */
+[data-skin='petanque'] .btn {
+  text-transform: none;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 0;
+  border-radius: 20px;
+}
+[data-skin='petanque'] .btn.small {
+  font-size: 16px;
+}
+[data-skin='petanque'] .page-title {
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+[data-skin='petanque'] .icon-btn,
+[data-skin='petanque'] .card {
+  background-color: var(--pq-cream);
+}
+[data-skin='petanque'] .sheet {
+  background: var(--pq-cream);
+}
+[data-skin='petanque'] .bottom-bar {
+  background: linear-gradient(to top, rgba(243, 230, 207, 0.96) 70%, transparent);
+}
+[data-skin='petanque'] .section-title {
+  color: var(--primary-deep);
+}

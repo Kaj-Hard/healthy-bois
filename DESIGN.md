@@ -62,8 +62,8 @@ Bold pastels in **complementary pairs**. Every theme is a set of CSS custom prop
 | Theme | Primary | Accent | Feeling |
 | --- | --- | --- | --- |
 | Home / app | Lilac `#9b7bff` | Butter `#ffd45c` | Friendly, neutral |
-| Pétanque | Terracotta coral `#ff8a5c` | Mediterranean teal `#3fc7b7` | Sun, gravel, Provence |
-| GRIS | Pitch mint `#43c77a` | Bubblegum pink `#ff7aa8` | Football in the park |
+| Pétanque | Terracotta `#e2683c` | Provence-shutter blue `#3b8fc9` | Sun-baked gravel terrain (see §12) |
+| GRIS | Kit green `#1f9d55` | Referee-card yellow `#ffd23f` (+ red `#ef4136`) | Street football pitch (see §12) |
 
 **Rules**
 - Every coloured surface has a **deep** shade for its 3D bottom edge and for text on top of it (`textShadow: 0 3px 0 deep`).
@@ -73,7 +73,9 @@ Bold pastels in **complementary pairs**. Every theme is a set of CSS custom prop
 
 ## 4. Typography
 
-- One family: **Nunito Variable** (bundled, works offline). Rounded and friendly, like Duolingo's Feather.
+- App chrome: **Nunito Variable** (bundled, works offline). Rounded and friendly, like Duolingo's Feather.
+- Every game skin brings its **own display face** for titles, names, scores and buttons (`--font-display`,
+  `--font-label`). Body text, helper copy and sheet descriptions stay Nunito so reading never gets harder.
 - Weights: **900** titles, numbers, buttons, names · **800** labels and body · **700** muted helper text.
 - Uppercase + `letter-spacing: .02–.06em` for buttons, badges, tab labels and section titles.
 - Sizes: page title 30–34 · sheet title 24 · names 16–22 · body 14–17 · helper 12–14 · **scores 44–128**.
@@ -148,7 +150,8 @@ and both can be switched off in Settings.
 
 ## 10. Adding a game (theme recipe and checklist)
 
-1. **Pick a complementary pastel pair** that says the game's vibe in one glance (park, bar, beach, table…).
+0. **Use the `new-game` skill** (`.claude/skills/new-game/`). It runs this whole recipe including the drilldown.
+1. **Pick a visual world, not just colours** (§12). Then a complementary pastel pair that says the game's vibe in one glance (park, bar, beach, table…).
    Derive `--bg` as a very light tint of the primary, `--ink` as a dark shade of it, and `deep`/`soft` variants for both colours.
 2. **Draw the `Art`** as an SVG at viewBox 100: object + soft ground shadow + highlight. It must read at 24 px and at 120 px.
 3. **Define modes** (`playerCounts`, `teams`, `target`) and **tags** for the library (`outdoor`, `ball`, `teams`, `ffa`, `elimination`;
@@ -158,7 +161,8 @@ and both can be switched off in Settings.
    `PointsSheet`/custom value sheet, `StarterPicker`, `TargetPips`, `TopBar`, `Sheet` menu with abandon.
    Keep the **tap who → tap what** rhythm.
 6. **Copy** in both languages: name, tagline, blurb, duration, mode name/tagline/rules.
-7. Register in `src/games/registry.ts`. Setup, library, favourites, photo, winner, stats and theming then work automatically.
+7. **Build the skin** (§12): `skin.css`, display font, signature components and `sfx.ts`.
+8. Register in `src/games/registry.ts`. Setup, library, favourites, photo, winner, stats and theming then work automatically.
 
 ## 11. Don'ts
 
@@ -168,3 +172,43 @@ and both can be switched off in Settings.
 - ❌ Animations that delay the next tap, or loops that are fast and distracting.
 - ❌ Hiding game state behind taps (scores, who's next and who's in danger are always visible).
 - ❌ Network calls. The app is fully offline; data lives on the phone.
+
+## 12. Game skins: same flow, different world
+
+Two games must never be mistakable for each other. **The UX skeleton is shared; the world is bespoke.**
+
+| Shared (never change per game) | Bespoke (every game owns it) |
+| --- | --- |
+| Screen flow (§2), tap-who → tap-what, sheets, undo toast, history strip, bottom CTA, tab bar | The setting: background texture, top-bar treatment, decorations |
+| Button and card **shapes and depth** (3D edge, press-down), target sizes | Display typeface and its casing/spacing (`--font-display`, `--font-label`) |
+| Motion constants (`spring`, `bouncy`) and when things animate | The **signature components**: what a side, a score, progress and danger look like |
+| Accessibility: contrast, readable body text in Nunito | Signature motion moments and **sounds** (`games/<id>/sfx.ts`) |
+
+**How it works.** `App.tsx` sets `data-skin="<game id>"` on every screen of that game (setup, play, photo, winner) and on
+the overlays. `games/<id>/skin.css` styles `.screen[data-skin='<id>']` and its descendants. The screen carries the
+attribute, not the page root, so the outgoing screen keeps its own look while the next slides in. Theme colours swap via
+CSS variables (`GameTheme.vars`).
+
+**Skin brief** (fill this in for every new game before writing code):
+
+| | Pétanque · Provençal terrain | GRIS · Street pitch |
+| --- | --- | --- |
+| Setting | Sun-baked gravel with a warm sun glow | Mowed pastel-mint stripes, chalk halfway line and centre circle |
+| Top bar | Striped café awning with a scalloped valance | Near-black scoreboard band, white chalk underline, LED pills |
+| Display font | Fraunces (soft serif), sentence-case buttons | Bebas Neue (condensed caps), wide letter-spacing, `font-synthesis: none` |
+| A side looks like | Hand-painted sign: team colour, dashed cream inner border, faint boule silhouette | Football kit card: striped shirt header, V-neck, big jersey number |
+| Score / progress | Big serif numerals; 13 steel boules roll into dents in the gravel | Referee cards: yellow G-R-I, red S; empty slots are dashed outlines |
+| Who's next / leader | Wooden jack (cochonnet) badge · 👑 | Captain's armband "C" on the fewest-letters player |
+| Danger state | ☀️ ochre "3 to win" / "Match point!" | Red-framed card + "Last life", ⚔️ "Final duel" |
+| Value sheet | Cream paper, serif 1–6 buttons with steel-boule tokens | The ref holds up the next card; yellow or red button |
+| Big moment | Panel pulse + steel-coloured particle burst | Red card flies out of the ref's pocket: "OUT" |
+| Sounds | Metallic clacks (one per point) + gravel settle; crunch on tap | Referee whistle (two blasts); long whistle + crowd "ohhh" on red |
+
+**Rules for skins**
+- Textures are CSS gradients or inline SVG data URIs (offline, tiny). No photos and no network images.
+- Fonts come from `@fontsource` packages imported in the game's `index.tsx` (bundled, offline). One display face per game.
+- If the display face has one weight, set `font-synthesis: none` so it is never faux-bolded.
+- Keep tappable things recognisable: same 3D edge and press-down behaviour, only the material changes.
+- Sounds are built from `tone`, `noise` and `trill` in `lib/feedback.ts`, and always paired with a haptic.
+- **Distinctness check:** put a screenshot of the new play screen next to every existing game's play screen.
+  If someone could mistake one for another at a glance, the skin isn't done.

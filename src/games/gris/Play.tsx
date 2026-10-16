@@ -8,7 +8,14 @@ import { colorOf } from '../../lib/palette';
 import { useApp, usePlayersById } from '../../store/app';
 import type { Match, PlayProps } from '../types';
 import { WORD, aliveSides, eliminationOrder, letters } from './rules';
-import { LETTER } from './theme';
+import { sfx } from './sfx';
+import { BOARD, RED, YELLOW, cardColor } from './theme';
+
+/*
+ * GRIS play screen, street-pitch skin (see skin.css and DESIGN.md §12).
+ * Players are kit cards with a jersey number, letters are referee cards
+ * (yellow for G-R-I, red for the final S), the top bar is the stadium scoreboard.
+ */
 
 export function GrisPlay({ match }: PlayProps) {
   const t = useT();
@@ -21,8 +28,8 @@ export function GrisPlay({ match }: PlayProps) {
   const [picking, setPicking] = useState<SideView>();
   const [origin, setOrigin] = useState<{ x: number; y: number }>();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [knockedOut, setKnockedOut] = useState<SideView>();
-  // One letter per opening: the sheet is still tappable while it animates away.
+  const [sentOff, setSentOff] = useState<SideView>();
+  // One card per opening: the sheet is still tappable while it animates away.
   const pickLock = useRef(false);
 
   const sides: SideView[] = match.sides.map((s) => {
@@ -30,6 +37,7 @@ export function GrisPlay({ match }: PlayProps) {
     const c = colorOf(p?.color);
     return { id: s.id, players: [p], label: p?.name ?? '?', color: { base: c.base, deep: c.deep, soft: `${c.base}38` } };
   });
+  const seat = new Map(match.sides.map((s, i) => [s.id, i + 1]));
   const byId = new Map(sides.map((s) => [s.id, s]));
   const alive = aliveSides(match);
   const aliveViews = sides.filter((s) => alive.includes(s.id));
@@ -40,7 +48,7 @@ export function GrisPlay({ match }: PlayProps) {
 
   const openSheet = (side: SideView, e: MouseEvent<HTMLElement>) => {
     if (match.status !== 'active') return;
-    fx.tap();
+    sfx.thump();
     pickLock.current = false;
     const r = e.currentTarget.getBoundingClientRect();
     setOrigin({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
@@ -58,13 +66,13 @@ export function GrisPlay({ match }: PlayProps) {
     setTimeout(() => {
       const next = score(side, 1, {
         origin,
-        sound: out ? fx.knockout : fx.stamp,
+        sound: out ? sfx.redCard : sfx.whistle,
         message: out ? t('gris.knockedOut', { name: side.label }) : t('gris.gotLetter', { name: side.label, letter }),
-        finishDelay: 1700,
+        finishDelay: 1800,
       });
       if (next && out) {
-        setKnockedOut(side);
-        setTimeout(() => setKnockedOut(undefined), 1500);
+        setSentOff(side);
+        setTimeout(() => setSentOff(undefined), 1600);
       }
     }, 120);
   };
@@ -90,9 +98,9 @@ export function GrisPlay({ match }: PlayProps) {
       <TopBar
         onBack={back}
         title={
-          <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {t('gris.name')}
-            <span className="badge" style={{ background: 'var(--primary-soft)', color: 'var(--primary-deep)' }}>
+            <span className="gr-led" style={{ fontSize: 17 }}>
               {t('gris.left', { n: alive.length, total: match.sides.length })}
             </span>
           </span>
@@ -105,15 +113,8 @@ export function GrisPlay({ match }: PlayProps) {
       />
 
       <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '0 16px 12px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 8, minHeight: 36, marginBottom: 6 }}>
-          <motion.span
-            key={match.rounds.length}
-            initial={{ scale: 0.6, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={bouncy}
-            className="badge"
-            style={{ background: 'var(--ink)', color: '#fff', fontSize: 14, padding: '7px 16px' }}
-          >
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, minHeight: 38, marginBottom: 8 }}>
+          <motion.span key={match.rounds.length} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={bouncy} className="gr-led" style={{ fontSize: 18 }}>
             ⚽ {t('gris.drops', { n: match.rounds.length })}
           </motion.span>
           <AnimatePresence>
@@ -124,7 +125,7 @@ export function GrisPlay({ match }: PlayProps) {
                 exit={{ scale: 0 }}
                 transition={{ scale: { repeat: Infinity, duration: 1.3 }, rotate: bouncy }}
                 className="badge"
-                style={{ background: 'var(--accent)', color: '#fff', fontSize: 14, padding: '7px 14px' }}
+                style={{ background: RED.base, color: '#fff', fontSize: 18, padding: '6px 14px 4px', boxShadow: `0 3px 0 ${RED.deep}` }}
               >
                 ⚔️ {t('gris.finalDuel')}
               </motion.span>
@@ -133,15 +134,16 @@ export function GrisPlay({ match }: PlayProps) {
         </div>
 
         <LayoutGroup>
-          <div style={{ display: 'grid', gridTemplateColumns: aliveViews.length <= 2 ? '1fr' : '1fr 1fr', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: aliveViews.length <= 2 ? '1fr' : '1fr 1fr', gap: 14 }}>
             <AnimatePresence mode="popLayout">
               {aliveViews.map((s) => (
-                <PlayerCard
+                <KitCard
                   key={s.id}
                   side={s}
+                  number={seat.get(s.id)!}
                   match={match}
                   big={aliveViews.length <= 2}
-                  leader={match.rounds.length > 0 && leaders.length === 1 && leaders[0] === s.id}
+                  captain={match.rounds.length > 0 && leaders.length === 1 && leaders[0] === s.id}
                   onTap={(e) => openSheet(s, e)}
                 />
               ))}
@@ -150,7 +152,9 @@ export function GrisPlay({ match }: PlayProps) {
 
           {outViews.length > 0 && (
             <>
-              <p className="section-title" style={{ marginTop: 20 }}>💀 {t('gris.outTitle')}</p>
+              <p className="section-title" style={{ marginTop: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <RefCard color={RED} width={14} /> {t('gris.outTitle')}
+              </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
                 {outViews.map((s, i) => (
                   <motion.div
@@ -158,22 +162,14 @@ export function GrisPlay({ match }: PlayProps) {
                     layout
                     initial={{ scale: 0, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
-                    transition={{ ...bouncy, delay: 0.25 }}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      padding: '6px 12px 6px 6px',
-                      borderRadius: 999,
-                      background: 'var(--surface)',
-                      border: '2px solid var(--line)',
-                    }}
+                    transition={{ ...bouncy, delay: 0.3 }}
+                    style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '5px 12px 5px 5px', borderRadius: 10, background: 'rgba(255,255,255,.85)', border: `2px solid ${RED.base}` }}
                   >
                     <span style={{ filter: 'grayscale(1)', opacity: 0.6 }}>
                       <Avatar player={s.players[0]} size={28} />
                     </span>
-                    <span style={{ fontWeight: 800, fontSize: 14, color: 'var(--ink-soft)', textDecoration: 'line-through' }}>{s.label}</span>
-                    <span className="muted" style={{ fontWeight: 900, fontSize: 12 }}>#{match.sides.length - i}</span>
+                    <span className="name" style={{ fontSize: 18, color: 'var(--ink-soft)', textDecoration: 'line-through' }}>{s.label}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: 16, color: RED.deep }}>#{match.sides.length - i}</span>
                   </motion.div>
                 ))}
               </div>
@@ -183,15 +179,15 @@ export function GrisPlay({ match }: PlayProps) {
       </div>
 
       <div className="bottom-bar" style={{ paddingTop: 10 }}>
-        <p className="muted" style={{ textAlign: 'center', fontWeight: 800, fontSize: 14, marginBottom: 6 }}>
+        <p style={{ textAlign: 'center', fontWeight: 800, fontSize: 14, marginBottom: 6, color: 'var(--ink-soft)' }}>
           👆 {t('gris.tapDropper')}
         </p>
         <HistoryStrip match={match} sides={sides} onUndo={undo} label={(_, i) => letterOf(i)} emptyLabel="gris.noDrops" />
       </div>
 
-      <LetterSheet side={picking} match={match} onGive={give} onClose={() => setPicking(undefined)} />
+      <CardSheet side={picking} match={match} onGive={give} onClose={() => setPicking(undefined)} />
 
-      <KnockoutOverlay side={knockedOut} />
+      <SentOffOverlay side={sentOff} />
 
       <Sheet open={menuOpen} onClose={() => setMenuOpen(false)}>
         <h2 style={{ marginBottom: 18 }}>{t('play.menu')}</h2>
@@ -208,35 +204,52 @@ export function GrisPlay({ match }: PlayProps) {
   );
 }
 
-/** The four GRIS tiles. Earned letters stamp in; the rest wait as dashed outlines. */
-export function LetterTiles({ count, size = 30, highlightNext }: { count: number; size?: number; highlightNext?: boolean }) {
+/* ---------- skin pieces ---------- */
+
+type CardColor = { base: string; deep: string; ink: string };
+
+/** A referee card. Portrait, rounded, with an optional letter printed on it. */
+function RefCard({ color, width, letter, empty }: { color: CardColor; width: number; letter?: string; empty?: boolean }) {
   return (
-    <div style={{ display: 'flex', gap: size * 0.18, justifyContent: 'center' }}>
+    <span
+      style={{
+        display: 'inline-grid',
+        placeItems: 'center',
+        flex: 'none',
+        width,
+        height: width * 1.36,
+        borderRadius: Math.max(3, width * 0.14),
+        background: empty ? 'rgba(255,255,255,.5)' : color.base,
+        border: empty ? '2px dashed rgba(15,59,34,.3)' : 'none',
+        boxShadow: empty ? 'none' : `0 ${Math.max(2, width * 0.08)}px 0 ${color.deep}`,
+        color: empty ? 'rgba(15,59,34,.35)' : color.ink,
+        fontFamily: 'var(--font-display)',
+        fontSize: width * 0.72,
+        lineHeight: 1,
+        paddingTop: width * 0.06,
+      }}
+    >
+      {letter}
+    </span>
+  );
+}
+
+/** The four card slots: earned cards are shown like a ref showing them, the rest wait as outlines. */
+function CardRow({ count, width = 26, highlightNext }: { count: number; width?: number; highlightNext?: boolean }) {
+  return (
+    <div style={{ display: 'flex', gap: width * 0.24, justifyContent: 'center' }}>
       {WORD.split('').map((ch, i) => {
         const earned = i < count;
         const next = highlightNext && i === count;
         return (
           <motion.span
             key={`${i}-${earned}`}
-            initial={earned ? { scale: 2.4, rotate: -25, opacity: 0 } : false}
-            animate={next ? { scale: [1, 1.12, 1], rotate: 0, opacity: 1 } : { scale: 1, rotate: earned ? (i % 2 ? 4 : -4) : 0, opacity: earned ? 1 : 0.4 }}
-            transition={next ? { repeat: Infinity, duration: 1 } : { type: 'spring', stiffness: 700, damping: 18 }}
-            style={{
-              width: size,
-              height: size * 1.12,
-              borderRadius: size * 0.28,
-              display: 'grid',
-              placeItems: 'center',
-              fontWeight: 900,
-              fontSize: size * 0.62,
-              lineHeight: 1,
-              background: earned ? LETTER.base : next ? LETTER.soft : 'transparent',
-              color: earned ? '#fff' : next ? LETTER.deep : 'var(--ink-soft)',
-              border: earned ? 'none' : `2px dashed ${next ? LETTER.base : 'var(--ink-soft)'}`,
-              boxShadow: earned ? `0 ${size * 0.1}px 0 ${LETTER.deep}` : 'none',
-            }}
+            initial={earned ? { y: -40, rotate: -35, scale: 1.7, opacity: 0 } : false}
+            animate={next ? { scale: [1, 1.12, 1], y: 0, rotate: 0, opacity: 1 } : { scale: 1, y: 0, rotate: earned ? (i % 2 ? 6 : -6) : 0, opacity: 1 }}
+            transition={next ? { repeat: Infinity, duration: 1 } : { type: 'spring', stiffness: 650, damping: 17 }}
+            style={{ display: 'inline-flex', outline: next ? `3px solid ${cardColor(i, WORD.length).base}` : 'none', outlineOffset: 2, borderRadius: 6 }}
           >
-            {ch}
+            <RefCard color={cardColor(i, WORD.length)} width={width} letter={ch} empty={!earned} />
           </motion.span>
         );
       })}
@@ -244,17 +257,20 @@ export function LetterTiles({ count, size = 30, highlightNext }: { count: number
   );
 }
 
-function PlayerCard({
+/** A player as a football kit card: shirt-colour header with V-neck, jersey number, name, cards. */
+function KitCard({
   side,
+  number,
   match,
   big,
-  leader,
+  captain,
   onTap,
 }: {
   side: SideView;
+  number: number;
   match: Match;
   big: boolean;
-  leader: boolean;
+  captain: boolean;
   onTap: (e: MouseEvent<HTMLElement>) => void;
 }) {
   const t = useT();
@@ -264,12 +280,14 @@ function PlayerCard({
   const prev = useRef(n);
   useEffect(() => {
     if (n > prev.current && scope.current) {
-      // A hit: quick shake so the whole circle sees who got the letter.
+      // Booked! A quick shake so the whole circle sees who got the card.
       void animate(scope.current, { x: [0, -10, 9, -6, 4, 0], rotate: [0, -3, 3, -2, 0] }, { duration: 0.45 });
     }
     prev.current = n;
   }, [n, animate, scope]);
 
+  const head = big ? 74 : 54;
+  const avatar = big ? 60 : 46;
   return (
     <motion.button
       ref={scope}
@@ -280,40 +298,75 @@ function PlayerCard({
       transition={spring}
       whileTap={{ scale: 0.95 }}
       onClick={onTap}
-      className="card"
       style={{
         position: 'relative',
-        padding: big ? '20px 16px 18px' : '14px 10px 12px',
-        display: 'flex',
-        flexDirection: big ? 'row' : 'column',
-        alignItems: 'center',
-        gap: big ? 16 : 8,
-        background: lastLife ? LETTER.soft : 'var(--surface)',
-        borderColor: lastLife ? LETTER.base : leader ? 'var(--primary)' : 'var(--line)',
-        boxShadow: `0 5px 0 ${lastLife ? LETTER.base : leader ? 'var(--primary-deep)' : 'var(--line)'}`,
-        marginBottom: 5,
-        textAlign: big ? 'left' : 'center',
+        borderRadius: 14,
+        background: '#fff',
+        border: `3px solid ${lastLife ? RED.base : '#fff'}`,
+        boxShadow: `0 6px 0 ${lastLife ? RED.deep : 'rgba(15,59,34,.28)'}`,
+        textAlign: 'center',
+        marginBottom: 6,
       }}
     >
-      <div style={{ position: 'relative', flex: 'none' }}>
-        <Avatar player={side.players[0]} size={big ? 68 : 54} />
+      {/* shirt: kit colour with vertical stripes and a V-neck */}
+      <div
+        style={{
+          position: 'relative',
+          height: head,
+          borderRadius: '11px 11px 0 0',
+          background: `repeating-linear-gradient(90deg, transparent 0 16px, rgba(255,255,255,.2) 16px 24px), ${side.color.base}`,
+          overflow: 'hidden',
+        }}
+      >
+        <span style={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', width: big ? 44 : 34, height: big ? 18 : 14, background: '#fff', clipPath: 'polygon(0 0, 100% 0, 50% 100%)' }} />
+        <span
+          style={{
+            position: 'absolute',
+            right: 10,
+            bottom: big ? 0 : -2,
+            fontFamily: 'var(--font-display)',
+            fontSize: big ? 62 : 44,
+            lineHeight: 1,
+            color: '#fff',
+            textShadow: `0 3px 0 ${side.color.deep}`,
+          }}
+        >
+          {number}
+        </span>
+      </div>
+      <span style={{ position: 'absolute', left: 10, top: head - avatar / 2 - 4 }}>
+        <Avatar player={side.players[0]} size={avatar} ring />
         <AnimatePresence>
-          {leader && (
+          {captain && (
             <motion.span
-              initial={{ y: 10, scale: 0, rotate: -30 }}
-              animate={{ y: 0, scale: 1, rotate: -18 }}
-              exit={{ y: 10, scale: 0 }}
+              initial={{ scale: 0, rotate: -30 }}
+              animate={{ scale: 1, rotate: -12 }}
+              exit={{ scale: 0 }}
               transition={bouncy}
-              style={{ position: 'absolute', top: -16, left: -8, fontSize: 24 }}
+              title="Captain"
+              style={{
+                position: 'absolute',
+                top: -8,
+                right: -14,
+                padding: '1px 6px 0',
+                borderRadius: 5,
+                background: YELLOW.base,
+                color: YELLOW.ink,
+                fontFamily: 'var(--font-display)',
+                fontSize: 17,
+                boxShadow: `0 2px 0 ${YELLOW.deep}`,
+              }}
             >
-              👑
+              C
             </motion.span>
           )}
         </AnimatePresence>
-      </div>
-      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', alignItems: big ? 'flex-start' : 'center', gap: 8, width: '100%' }}>
-        <span className="name" style={{ fontSize: big ? 22 : 16, maxWidth: '100%' }}>{side.label}</span>
-        <LetterTiles count={n} size={big ? 40 : 28} />
+      </span>
+      <div style={{ padding: big ? '14px 14px 16px' : '26px 10px 12px', display: 'flex', flexDirection: 'column', alignItems: big ? 'flex-end' : 'center', gap: 8 }}>
+        <span className="name" style={{ fontSize: big ? 32 : 24, maxWidth: '100%', color: 'var(--ink)' }}>
+          {side.label}
+        </span>
+        <CardRow count={n} width={big ? 36 : 25} />
       </div>
       <AnimatePresence>
         {lastLife && (
@@ -323,7 +376,7 @@ function PlayerCard({
             exit={{ scale: 0 }}
             transition={{ repeat: Infinity, duration: 1 }}
             className="badge"
-            style={{ position: 'absolute', top: -10, right: -6, background: LETTER.deep, color: '#fff', boxShadow: '0 3px 0 rgba(0,0,0,.15)' }}
+            style={{ position: 'absolute', top: -12, right: -6, background: RED.base, color: '#fff', fontSize: 15, padding: '4px 10px 2px', boxShadow: `0 3px 0 ${RED.deep}` }}
           >
             ❤️ {t('gris.lastLife')}
           </motion.span>
@@ -333,36 +386,50 @@ function PlayerCard({
   );
 }
 
-function LetterSheet({ side, match, onGive, onClose }: { side?: SideView; match: Match; onGive: () => void; onClose: () => void }) {
+function CardSheet({ side, match, onGive, onClose }: { side?: SideView; match: Match; onGive: () => void; onClose: () => void }) {
   const t = useT();
   const n = side ? letters(match, side.id) : 0;
   const out = n + 1 >= match.target;
   const letter = WORD[Math.min(n, WORD.length - 1)];
+  const color = cardColor(Math.min(n, WORD.length - 1), WORD.length);
   return (
     <Sheet open={!!side} onClose={onClose}>
       {side && (
         <>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 14 }}>
             <Avatar player={side.players[0]} size={52} />
             <div style={{ minWidth: 0 }}>
-              <h2>{t('gris.dropQuestion', { name: side.label })}</h2>
-              <p className="muted" style={{ fontWeight: 700, fontSize: 14 }}>
-                {out ? t('gris.lastLetterWarning') : t('gris.nextLetter', { letter })}
-              </p>
+              <h2>{t('gris.dropQuestion', { name: side.label.toUpperCase() })}</h2>
+              <p className="muted" style={{ fontWeight: 700, fontSize: 14 }}>{out ? t('gris.lastLetterWarning') : t('gris.nextLetter', { letter })}</p>
             </div>
           </div>
-          <div style={{ margin: '4px 0 24px' }}>
-            <LetterTiles count={n} size={56} highlightNext />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 24, margin: '6px 0 22px' }}>
+            {/* the ref holds the card up */}
+            <motion.span
+              initial={{ y: 40, rotate: -30, scale: 0.5 }}
+              animate={{ y: 0, rotate: [-7, 5, -7], scale: 1 }}
+              transition={{ y: bouncy, scale: bouncy, rotate: { repeat: Infinity, duration: 1.6, ease: 'easeInOut' } }}
+              style={{ display: 'inline-flex' }}
+            >
+              <RefCard color={color} width={78} letter={letter} />
+            </motion.span>
+            <CardRow count={n} width={28} highlightNext />
           </div>
           <motion.button
             initial={{ scale: 0.6, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ ...bouncy, delay: 0.08 }}
-            className={`btn block ${out ? 'danger' : ''}`}
-            style={out ? { minHeight: 76, fontSize: 22 } : { minHeight: 76, fontSize: 22, ['--c' as string]: LETTER.base, ['--d' as string]: LETTER.deep }}
+            className="btn block"
+            style={{
+              minHeight: 76,
+              fontSize: 30,
+              ['--c' as string]: color.base,
+              ['--d' as string]: color.deep,
+              ['--t' as string]: color.ink,
+            }}
             onClick={onGive}
           >
-            {out ? `💀 ${letter} · ${t('gris.out')}` : t('gris.give', { letter })}
+            {out ? `🟥 ${t('gris.red')}` : `🟨 ${t('gris.yellow', { letter })}`}
           </motion.button>
         </>
       )}
@@ -370,7 +437,7 @@ function LetterSheet({ side, match, onGive, onClose }: { side?: SideView; match:
   );
 }
 
-function KnockoutOverlay({ side }: { side?: SideView }) {
+function SentOffOverlay({ side }: { side?: SideView }) {
   const t = useT();
   return (
     <AnimatePresence>
@@ -387,35 +454,44 @@ function KnockoutOverlay({ side }: { side?: SideView }) {
             display: 'grid',
             placeItems: 'center',
             pointerEvents: 'none',
-            background: 'radial-gradient(circle, rgba(23,58,40,.55) 0%, rgba(23,58,40,.25) 70%)',
+            background: `radial-gradient(circle, ${BOARD}cc 0%, ${BOARD}66 75%)`,
           }}
         >
-          <motion.div
-            initial={{ scale: 0, rotate: -25 }}
-            animate={{ scale: 1, rotate: -6 }}
-            exit={{ scale: 1.6, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 14 }}
-            style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}
-          >
-            <span style={{ filter: 'grayscale(1)' }}>
-              <Avatar player={side.players[0]} size={96} ring />
-            </span>
-            <span
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            {/* the red card flies up out of the ref's pocket */}
+            <motion.div
+              initial={{ y: 420, rotate: 50, scale: 0.6 }}
+              animate={{ y: 0, rotate: -8, scale: 1 }}
+              exit={{ scale: 1.4, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 15 }}
               style={{
-                fontSize: 64,
-                fontWeight: 900,
-                color: '#fff',
-                background: LETTER.base,
-                padding: '0 26px',
-                borderRadius: 24,
-                boxShadow: `0 8px 0 ${LETTER.deep}`,
-                letterSpacing: '0.04em',
+                width: 150,
+                height: 204,
+                borderRadius: 18,
+                background: RED.base,
+                boxShadow: `0 10px 0 ${RED.deep}, 0 20px 40px rgba(0,0,0,.35)`,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
               }}
             >
-              💀 {t('gris.out')}
-            </span>
-            <span style={{ fontSize: 22, fontWeight: 900, color: '#fff', textShadow: '0 2px 0 rgba(0,0,0,.25)' }}>{side.label}</span>
-          </motion.div>
+              <span style={{ filter: 'grayscale(1)' }}>
+                <Avatar player={side.players[0]} size={64} ring />
+              </span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 64, lineHeight: 1, color: '#fff', letterSpacing: '0.04em' }}>{t('gris.out')}</span>
+            </motion.div>
+            <motion.span
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ ...bouncy, delay: 0.25 }}
+              className="gr-led"
+              style={{ fontSize: 30 }}
+            >
+              {side.label.toUpperCase()}
+            </motion.span>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>

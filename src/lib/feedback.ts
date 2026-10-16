@@ -14,7 +14,8 @@ function audio(): AudioContext | null {
   }
 }
 
-function tone(freq: number, start: number, dur: number, type: OscillatorType = 'sine', gain = 0.18) {
+/** One enveloped oscillator note. Building block for game-specific sounds (see games/<game>/sfx.ts). */
+export function tone(freq: number, start: number, dur: number, type: OscillatorType = 'sine', gain = 0.18) {
   const a = audio();
   if (!a) return;
   const t = a.currentTime + start;
@@ -30,7 +31,56 @@ function tone(freq: number, start: number, dur: number, type: OscillatorType = '
   osc.stop(t + dur + 0.02);
 }
 
-function haptic(fn: () => Promise<void>) {
+/** Filtered white-noise burst (gravel crunch, crowd, wind). `sweepTo` slides the filter frequency. */
+export function noise(start: number, dur: number, opts: { freq: number; q?: number; gain?: number; sweepTo?: number; type?: BiquadFilterType }) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime + start;
+  const buffer = a.createBuffer(1, Math.ceil(a.sampleRate * dur), a.sampleRate);
+  const data = buffer.getChannelData(0);
+  for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+  const src = a.createBufferSource();
+  src.buffer = buffer;
+  const filter = a.createBiquadFilter();
+  filter.type = opts.type ?? 'bandpass';
+  filter.Q.value = opts.q ?? 1;
+  filter.frequency.setValueAtTime(opts.freq, t);
+  if (opts.sweepTo) filter.frequency.exponentialRampToValueAtTime(opts.sweepTo, t + dur);
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(opts.gain ?? 0.2, t + Math.min(0.05, dur / 4));
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  src.connect(filter).connect(g).connect(a.destination);
+  src.start(t);
+  src.stop(t + dur + 0.02);
+}
+
+/** A whistle-style note: square-ish tone with fast vibrato (referee whistle, birds). */
+export function trill(freq: number, start: number, dur: number, gain = 0.08) {
+  const a = audio();
+  if (!a) return;
+  const t = a.currentTime + start;
+  const osc = a.createOscillator();
+  const lfo = a.createOscillator();
+  const lfoGain = a.createGain();
+  const g = a.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(freq, t);
+  lfo.frequency.setValueAtTime(28, t);
+  lfoGain.gain.setValueAtTime(freq * 0.05, t);
+  lfo.connect(lfoGain).connect(osc.frequency);
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(gain, t + 0.015);
+  g.gain.setValueAtTime(gain, t + dur - 0.03);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  osc.connect(g).connect(a.destination);
+  osc.start(t);
+  lfo.start(t);
+  osc.stop(t + dur + 0.02);
+  lfo.stop(t + dur + 0.02);
+}
+
+export function haptic(fn: () => Promise<void>) {
   if (!useApp.getState().settings.haptics) return;
   fn().catch(() => {});
 }

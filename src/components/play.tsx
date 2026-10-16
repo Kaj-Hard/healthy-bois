@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Match, Round } from '../games/types';
 import { useT, type TKey } from '../i18n';
 import { pop } from '../lib/confetti';
@@ -70,11 +70,14 @@ export function PointsSheet({
   max,
   onPick,
   onClose,
+  dot,
 }: {
   side?: SideView;
   max: number;
   onPick: (points: number) => void;
   onClose: () => void;
+  /** Token drawn once per point under the number (skins swap in boules, cards...). */
+  dot?: ReactNode;
 }) {
   const t = useT();
   const cols = max <= 3 ? 3 : 3;
@@ -111,9 +114,9 @@ export function PointsSheet({
               >
                 <span style={{ lineHeight: 1 }}>{n}</span>
                 <span style={{ display: 'flex', gap: 3 }}>
-                  {Array.from({ length: n }, (_, k) => (
-                    <span key={k} style={{ width: 9, height: 9, borderRadius: '50%', background: 'rgba(255,255,255,.85)' }} />
-                  ))}
+                  {Array.from({ length: n }, (_, k) =>
+                    dot ? <span key={k} style={{ display: 'inline-flex' }}>{dot}</span> : <span key={k} style={{ width: 9, height: 9, borderRadius: '50%', background: 'rgba(255,255,255,.85)' }} />,
+                  )}
                 </span>
               </motion.button>
             ))}

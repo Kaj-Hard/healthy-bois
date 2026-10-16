@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useAnimate } from 'motion/react';
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
-import { HistoryStrip, PointsSheet, StarterPicker, TargetPips, useRoundActions, type SideView } from '../../components/play';
+import { HistoryStrip, PointsSheet, StarterPicker, useRoundActions, type SideView } from '../../components/play';
 import { Avatar, AvatarStack, Icon, RollingNumber, Sheet, TopBar, bouncy, useOverlay } from '../../components/ui';
 import { useT } from '../../i18n';
 import { fx } from '../../lib/feedback';
@@ -9,7 +9,14 @@ import { colorOf } from '../../lib/palette';
 import { useApp, usePlayersById } from '../../store/app';
 import type { PlayProps } from '../types';
 import { OFFICIAL, formatKey, maxPointsPerRound } from './rules';
-import { theme } from './theme';
+import { sfx } from './sfx';
+import { JACK, STEEL, theme } from './theme';
+
+/*
+ * Pétanque play screen, Provençal-terrain skin (see skin.css and DESIGN.md §12).
+ * Team panels are hand-painted signs on the gravel, progress is a row of steel boules,
+ * and the wooden jack marks who throws next.
+ */
 
 function joinNames(names: string[]): string {
   if (names.length <= 1) return names[0] ?? '';
@@ -50,7 +57,7 @@ export function PetanquePlay({ match }: PlayProps) {
   const pickLock = useRef(false);
 
   const openPicker = (side: SideView, e: MouseEvent<HTMLElement>) => {
-    fx.tap();
+    sfx.crunch();
     pickLock.current = false;
     const r = e.currentTarget.getBoundingClientRect();
     setOrigin({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
@@ -63,7 +70,7 @@ export function PetanquePlay({ match }: PlayProps) {
     pickLock.current = true;
     setPicking(undefined);
     // Let the sheet start closing so the burst lands on the visible panel.
-    setTimeout(() => score(side, points, { origin }), 120);
+    setTimeout(() => score(side, points, { origin, sound: () => sfx.clack(points) }), 120);
   };
 
   const abandon = async () => {
@@ -82,7 +89,7 @@ export function PetanquePlay({ match }: PlayProps) {
         title={
           <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {t('petanque.name')}
-            <span className="badge" style={{ background: 'var(--primary-soft)', color: 'var(--primary-deep)' }}>
+            <span className="badge" style={{ background: 'var(--pq-ochre)', color: 'var(--ink)' }}>
               {t(formatKey(match))}
             </span>
           </span>
@@ -95,7 +102,7 @@ export function PetanquePlay({ match }: PlayProps) {
       />
 
       {official ? (
-        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 12, padding: '4px 16px 0' }}>
+        <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 10, padding: '2px 16px 0' }}>
           <TeamPanel side={sides[0]} score={scores.get(sides[0].id)!} target={match.target} max={max} isStarter={starter === sides[0].id} onTap={(e) => openPicker(sides[0], e)} />
           <MidBar label={t('play.end', { n: match.rounds.length + 1 })} needsStarter={needsStarter} onStarter={() => setStarterOpen(true)} />
           <TeamPanel side={sides[1]} score={scores.get(sides[1].id)!} target={match.target} max={max} isStarter={starter === sides[1].id} onTap={(e) => openPicker(sides[1], e)} />
@@ -126,7 +133,7 @@ export function PetanquePlay({ match }: PlayProps) {
         <HistoryStrip match={match} sides={sides} onUndo={undo} />
       </div>
 
-      <PointsSheet side={picking} max={max} onPick={pick} onClose={() => setPicking(undefined)} />
+      <PointsSheet side={picking} max={max} onPick={pick} onClose={() => setPicking(undefined)} dot={<Boule size={12} />} />
 
       <StarterPicker
         open={starterOpen}
@@ -158,18 +165,78 @@ export function PetanquePlay({ match }: PlayProps) {
   );
 }
 
+/* ---------- skin pieces ---------- */
+
+/** A steel boule (filled) or the dent one leaves in the gravel (empty). */
+function Boule({ size, empty, onDark }: { size: number | '100%'; empty?: boolean; onDark?: boolean }) {
+  return (
+    <span
+      style={{
+        display: 'inline-block',
+        flex: 'none',
+        width: size,
+        aspectRatio: '1',
+        borderRadius: '50%',
+        background: empty ? (onDark ? 'rgba(61,36,20,.22)' : 'rgba(61,36,20,.12)') : STEEL,
+        boxShadow: empty ? 'inset 0 2px 3px rgba(61,36,20,.35)' : '0 2px 0 rgba(61,36,20,.35)',
+      }}
+    />
+  );
+}
+
+/** The cochonnet: a little wooden ball. */
+function Jack({ size = 16 }: { size?: number }) {
+  return <span style={{ display: 'inline-block', flex: 'none', width: size, height: size, borderRadius: '50%', background: JACK, boxShadow: '0 2px 0 rgba(61,36,20,.3)' }} />;
+}
+
+/** 13 boules: one rolls into place for every point scored. */
+function BoulePips({ score, target, onDark }: { score: number; target: number; onDark?: boolean }) {
+  return (
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      {Array.from({ length: target }, (_, i) => {
+        const filled = i < score;
+        return (
+          <motion.span
+            key={`${i}-${filled}`}
+            initial={filled ? { scale: 0, x: -14, rotate: -120 } : false}
+            animate={{ scale: 1, x: 0, rotate: 0 }}
+            transition={{ ...bouncy, delay: filled ? (i % 6) * 0.05 : 0 }}
+            style={{ display: 'flex', flex: 1, maxWidth: 20, aspectRatio: '1' }}
+          >
+            <Boule size="100%" empty={!filled} onDark={onDark} />
+          </motion.span>
+        );
+      })}
+    </div>
+  );
+}
+
 function MidBar({ label, needsStarter, onStarter }: { label: string; needsStarter: boolean; onStarter: () => void }) {
   const t = useT();
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 40 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, minHeight: 44 }}>
+      {/* enamel plaque, like a street sign in a Provençal village */}
       <motion.span
         key={label}
-        initial={{ scale: 0.6, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
+        initial={{ scale: 0.6, opacity: 0, rotate: -6 }}
+        animate={{ scale: 1, opacity: 1, rotate: -1.5 }}
         transition={bouncy}
-        className="badge"
-        style={{ background: 'var(--ink)', color: '#fff', fontSize: 14, padding: '7px 16px' }}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '6px 16px 6px 10px',
+          borderRadius: 12,
+          background: 'var(--accent-deep)',
+          color: 'var(--pq-cream)',
+          border: '3px solid var(--pq-cream)',
+          boxShadow: '0 4px 0 rgba(61,36,20,.25)',
+          fontFamily: 'var(--font-display)',
+          fontWeight: 700,
+          fontSize: 17,
+        }}
       >
+        <Jack size={16} />
         {label}
       </motion.span>
       <AnimatePresence>
@@ -179,10 +246,11 @@ function MidBar({ label, needsStarter, onStarter }: { label: string; needsStarte
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={bouncy}
-            className="btn small accent"
+            className="btn small"
+            style={{ ['--c' as string]: 'var(--pq-ochre)', ['--d' as string]: '#c98a1a', ['--t' as string]: 'var(--ink)' }}
             onClick={() => { fx.tap(); onStarter(); }}
           >
-            🎯 {t('play.whoStartsShort')}
+            🪙 {t('play.whoStartsShort')}
           </motion.button>
         )}
       </AnimatePresence>
@@ -196,23 +264,23 @@ function usePulse(score: number) {
   const prev = useRef(score);
   useEffect(() => {
     if (score > prev.current && scope.current) {
-      void animate(scope.current, { scale: [1, 1.06, 0.98, 1] }, { duration: 0.5, ease: 'easeOut' });
+      void animate(scope.current, { scale: [1, 1.05, 0.985, 1], rotate: [0, -0.8, 0.5, 0] }, { duration: 0.5, ease: 'easeOut' });
     }
     prev.current = score;
   }, [score, animate, scope]);
   return scope;
 }
 
-function JackBadge({ deep }: { deep: string }) {
+function JackBadge() {
   const t = useT();
   return (
     <motion.span
       layoutId="jack"
       transition={bouncy}
       className="badge"
-      style={{ background: '#fff', color: deep, boxShadow: '0 3px 0 rgba(0,0,0,.12)' }}
+      style={{ background: 'var(--pq-cream)', color: 'var(--ink)', boxShadow: '0 3px 0 rgba(61,36,20,.2)', gap: 6, padding: '4px 10px 4px 5px' }}
     >
-      🎯 {t('play.jack')}
+      <Jack size={16} /> {t('play.jack')}
     </motion.span>
   );
 }
@@ -246,11 +314,11 @@ function TeamPanel({
         minHeight: 0,
         position: 'relative',
         overflow: 'hidden',
-        borderRadius: 30,
-        padding: '16px 18px 18px',
-        background: side.color.base,
-        boxShadow: `0 7px 0 ${side.color.deep}`,
-        color: '#fff',
+        borderRadius: 28,
+        padding: '18px 20px 20px',
+        background: `linear-gradient(165deg, ${side.color.base} 0%, ${side.color.base} 55%, ${side.color.deep} 140%)`,
+        boxShadow: `0 7px 0 ${side.color.deep}, 0 14px 24px rgba(61,36,20,.18)`,
+        color: 'var(--pq-cream)',
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'space-between',
@@ -258,16 +326,20 @@ function TeamPanel({
         marginBottom: 7,
       }}
     >
-      {/* decorative boule silhouettes */}
-      <span style={{ position: 'absolute', right: -40, top: -50, width: 180, height: 180, borderRadius: '50%', background: 'rgba(255,255,255,.13)' }} />
-      <span style={{ position: 'absolute', left: -30, bottom: -60, width: 120, height: 120, borderRadius: '50%', background: 'rgba(255,255,255,.09)' }} />
+      {/* hand-painted sign: a dashed cream border inside the panel */}
+      <span style={{ position: 'absolute', inset: 8, borderRadius: 21, border: '2px dashed rgba(255,248,234,.55)', pointerEvents: 'none' }} />
+      {/* a big boule silhouette with its grooves, painted faintly in the corner */}
+      <svg viewBox="0 0 100 100" width="190" height="190" style={{ position: 'absolute', right: -50, bottom: -60, opacity: 0.16 }} aria-hidden>
+        <circle cx="50" cy="50" r="46" fill="#fff8ea" />
+        <path d="M6 42 Q50 64 94 36 M5 56 Q50 80 95 50" stroke={side.color.deep} strokeWidth="4" fill="none" />
+      </svg>
 
       <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-start', gap: 10, width: '100%' }}>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
           <AvatarStack players={side.players} size={38} />
-          <span style={{ fontWeight: 900, fontSize: 18, lineHeight: 1.2, textShadow: `0 2px 0 ${side.color.deep}` }}>{side.label}</span>
+          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: 20, lineHeight: 1.15, textShadow: `0 2px 0 ${side.color.deep}` }}>{side.label}</span>
         </div>
-        {isStarter && <JackBadge deep={side.color.deep} />}
+        {isStarter && <JackBadge />}
       </div>
 
       <div style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', width: '100%' }}>
@@ -279,20 +351,28 @@ function TeamPanel({
               exit={{ scale: 0 }}
               transition={{ scale: { repeat: Infinity, duration: 1.2 }, rotate: bouncy }}
               className="badge"
-              style={{ background: '#ffd45c', color: '#3a2618', fontSize: 13, marginBottom: 18 }}
+              style={{ background: 'var(--pq-ochre)', color: 'var(--ink)', fontSize: 13, marginBottom: 18, boxShadow: '0 3px 0 #c98a1a' }}
             >
-              🔥 {toGo <= 1 ? t('play.matchPoint') : t('play.toWin', { n: toGo })}
+              ☀️ {toGo <= 1 ? t('play.matchPoint') : t('play.toWin', { n: toGo })}
             </motion.span>
           )}
         </AnimatePresence>
         <RollingNumber
           value={score}
-          style={{ marginLeft: 'auto', fontSize: 'clamp(76px, 24vw, 128px)', fontWeight: 900, lineHeight: 0.9, textShadow: `0 6px 0 ${side.color.deep}`, letterSpacing: '-0.04em' }}
+          style={{
+            marginLeft: 'auto',
+            fontFamily: 'var(--font-display)',
+            fontSize: 'clamp(84px, 26vw, 136px)',
+            fontWeight: 800,
+            lineHeight: 0.9,
+            textShadow: `0 6px 0 ${side.color.deep}`,
+            letterSpacing: '-0.03em',
+          }}
         />
       </div>
 
       <div style={{ position: 'relative', width: '100%' }}>
-        <TargetPips score={score} target={target} color="#fff" onDark />
+        <BoulePips score={score} target={target} onDark />
       </div>
     </motion.button>
   );
@@ -323,20 +403,23 @@ function PlayerRow({
       whileTap={{ scale: 0.97 }}
       className="card"
       style={{
+        position: 'relative',
+        overflow: 'hidden',
         flex: '1 0 auto',
-        minHeight: 70,
-        maxHeight: 112,
+        minHeight: 72,
+        maxHeight: 116,
         display: 'flex',
         alignItems: 'center',
         gap: 12,
-        padding: '10px 16px 10px 12px',
+        padding: '10px 16px 10px 20px',
         textAlign: 'left',
-        background: leader ? side.color.soft : 'var(--surface)',
         borderColor: leader ? side.color.base : 'var(--line)',
-        boxShadow: `0 5px 0 ${leader ? side.color.base : 'var(--line)'}`,
+        boxShadow: `0 5px 0 ${leader ? side.color.deep : 'var(--line)'}`,
         marginBottom: 5,
       }}
     >
+      {/* painted colour stripe on the left edge */}
+      <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 8, background: side.color.base }} />
       <div style={{ position: 'relative' }}>
         <Avatar player={side.players[0]} size={50} />
         <AnimatePresence>
@@ -353,29 +436,30 @@ function PlayerRow({
           )}
         </AnimatePresence>
         {isStarter && (
-          <motion.span layoutId="jack" transition={bouncy} style={{ position: 'absolute', bottom: -4, right: -6, fontSize: 20 }} title={t('play.jack')}>
-            🎯
+          <motion.span layoutId="jack" transition={bouncy} style={{ position: 'absolute', bottom: -2, right: -4 }} title={t('play.jack')}>
+            <Jack size={20} />
           </motion.span>
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <span style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
-          <span className="name">{side.label}</span>
+          <span className="name" style={{ fontSize: 19, fontWeight: 700 }}>{side.label}</span>
           {score > 0 && target - score <= 3 && (
             <motion.span
               initial={{ scale: 0 }}
               animate={{ scale: [1, 1.15, 1] }}
               transition={{ repeat: Infinity, duration: 1.2 }}
               className="badge"
-              style={{ background: '#ffd45c', color: '#3a2618', padding: '2px 8px' }}
+              style={{ background: 'var(--pq-ochre)', color: 'var(--ink)', padding: '2px 8px' }}
             >
-              🔥 {target - score <= 1 ? t('play.matchPoint') : t('play.toWin', { n: target - score })}
+              ☀️ {target - score <= 1 ? t('play.matchPoint') : t('play.toWin', { n: target - score })}
             </motion.span>
           )}
         </span>
-        <TargetPips score={score} target={target} color={side.color.base} />
+        <BoulePips score={score} target={target} />
       </div>
-      <RollingNumber value={score} style={{ fontSize: 44, fontWeight: 900, color: side.color.deep, minWidth: 56, justifyContent: 'flex-end' }} />
+      <RollingNumber value={score} style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 800, color: side.color.deep, minWidth: 56, justifyContent: 'flex-end' }} />
     </motion.button>
   );
 }
+

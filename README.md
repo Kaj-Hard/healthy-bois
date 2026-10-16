@@ -45,7 +45,7 @@ all data, as long as they're built on the same machine (same debug signing key).
 
 ## Adding a new game
 
-Follow the recipe in [DESIGN.md §10](DESIGN.md#10-adding-a-game-theme-recipe-and-checklist). In short:
+Ask Claude to use the `new-game` skill (`.claude/skills/new-game/`), or follow the recipe in [DESIGN.md §10](DESIGN.md#10-adding-a-game-theme-recipe-and-checklist). In short:
 
 1. Create `src/games/<game>/` exporting a `GameDefinition` (see `src/games/types.ts`):
    a theme (CSS variables + side colours), modes (player counts, teams or not, target), library tags,
