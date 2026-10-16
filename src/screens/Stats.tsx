@@ -5,7 +5,7 @@ import { GAMES, getGame } from '../games/registry';
 import type { Match } from '../games/types';
 import { useT, type T } from '../i18n';
 import { fx } from '../lib/feedback';
-import { sideScore } from '../lib/match';
+import { Polaroid } from '../components/Polaroid';
 import { finishedMatches, leaderboard, type PlayerStats } from '../lib/stats';
 import { useApp, usePlayersById, type Player } from '../store/app';
 
@@ -194,7 +194,7 @@ function RecentMatch({ match, playersById, t }: { match: Match; playersById: Map
   const lang = useApp((s) => s.settings.lang);
   const game = getGame(match.gameId);
   const mode = game.modes.find((m) => m.id === match.modeId);
-  const sides = [...match.sides].sort((a, b) => sideScore(match, b.id) - sideScore(match, a.id));
+  const sides = game.ranking(match).map((id) => match.sides.find((s) => s.id === id)!);
 
   const remove = async () => {
     fx.tap();
@@ -207,24 +207,33 @@ function RecentMatch({ match, playersById, t }: { match: Match; playersById: Map
         <game.Art size={24} />
         <span style={{ fontWeight: 900, fontSize: 14 }}>{t(game.name)}</span>
         {mode && <span className="muted" style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>· {t(mode.name)}</span>}
-        <span className="muted" style={{ marginLeft: 'auto', fontWeight: 700, fontSize: 12 }}>{dateLabel(match.finishedAt ?? match.startedAt, t, lang)}</span>
+        <span className="muted" style={{ marginLeft: 'auto', fontWeight: 700, fontSize: 12, whiteSpace: 'nowrap' }}>{dateLabel(match.finishedAt ?? match.startedAt, t, lang)}</span>
         <button onClick={remove} aria-label={t('common.delete')} style={{ width: 26, height: 26, color: 'var(--ink-soft)', opacity: 0.6, display: 'grid', placeItems: 'center' }}>
           <span style={{ width: 14, height: 14, display: 'inline-flex' }}>{Icon.close}</span>
         </button>
       </div>
-      {sides.map((s) => {
-        const won = s.id === match.winnerSideId;
-        const ps = s.playerIds.map((id) => playersById.get(id));
-        return (
-          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', opacity: won ? 1 : 0.65 }}>
-            <AvatarStack players={ps} size={24} />
-            <span className="name" style={{ flex: 1, fontSize: 14, fontWeight: won ? 900 : 700 }}>
-              {ps.map((p) => p?.name ?? '?').join(' & ')} {won && '🏆'}
-            </span>
-            <span style={{ fontWeight: 900 }}>{sideScore(match, s.id)}</span>
-          </div>
-        );
-      })}
+      <div style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Big free-for-alls only list the top of the table to keep the card short. */}
+          {sides.slice(0, 5).map((s) => {
+            const won = s.id === match.winnerSideId;
+            const ps = s.playerIds.map((id) => playersById.get(id));
+            return (
+              <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '3px 0', opacity: won ? 1 : 0.65 }}>
+                <AvatarStack players={ps} size={24} />
+                <span className="name" style={{ flex: 1, fontSize: 14, fontWeight: won ? 900 : 700 }}>
+                  {ps.map((p) => p?.name ?? '?').join(' & ')} {won && '🏆'}
+                </span>
+                <span style={{ fontWeight: 900, letterSpacing: '0.04em' }}>{game.scoreText(match, s.id)}</span>
+              </div>
+            );
+          })}
+          {sides.length > 5 && (
+            <p className="muted" style={{ fontWeight: 800, fontSize: 12, paddingLeft: 32 }}>+{sides.length - 5}</p>
+          )}
+        </div>
+        {match.photo && <Polaroid path={match.photo} width={92} rotate={4} />}
+      </div>
     </motion.div>
   );
 }

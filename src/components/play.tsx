@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
-import type { Match } from '../games/types';
-import { useT } from '../i18n';
+import type { Match, Round } from '../games/types';
+import { useT, type TKey } from '../i18n';
 import { pop } from '../lib/confetti';
 import { fx } from '../lib/feedback';
 import { useApp, type Player } from '../store/app';
@@ -15,6 +15,17 @@ export interface SideView {
 }
 
 /* ---------- scoring actions ---------- */
+
+export interface ScoreOptions {
+  /** Screen point for the particle burst. */
+  origin?: { x: number; y: number };
+  /** Toast text (defaults to "+N name"). */
+  message?: string;
+  /** Sound + haptic to play (defaults to the score arpeggio). */
+  sound?: () => void;
+  /** ms to wait before leaving for the photo step when the game ends. */
+  finishDelay?: number;
+}
 
 export function useRoundActions() {
   const t = useT();
@@ -34,16 +45,19 @@ export function useRoundActions() {
     useOverlay.getState().hide();
   };
 
-  const score = (side: SideView, points: number, origin?: { x: number; y: number }) => {
+  const score = (side: SideView, points: number, opts: ScoreOptions = {}) => {
     const next = scoreRound(side.id, points);
-    if (!next) return;
-    fx.score(points);
-    if (origin) pop(origin.x, origin.y, [side.color.base, side.color.deep, '#ffffff'], 16 + points * 8);
+    if (!next) return undefined;
+    (opts.sound ?? (() => fx.score(points)))();
+    if (opts.origin) pop(opts.origin.x, opts.origin.y, [side.color.base, side.color.deep, '#ffffff'], 16 + points * 8);
     if (next.status === 'finished') {
-      setTimeout(() => replace({ name: 'winner', matchId: next.id }), 650);
+      // Winner photo first, then the celebration (see screens/Photo.tsx).
+      setTimeout(() => replace({ name: 'photo', matchId: next.id }), opts.finishDelay ?? 650);
     } else {
-      useOverlay.getState().show(t('play.scored', { n: points, name: side.label }), { label: t('common.undo'), run: undo });
+      const message = opts.message ?? t('play.scored', { n: points, name: side.label });
+      useOverlay.getState().show(message, { label: t('common.undo'), run: undo });
     }
+    return next;
   };
 
   return { score, undo };
@@ -242,7 +256,20 @@ export function StarterPicker({ open, sides, onDone, onClose }: { open: boolean;
 
 /* ---------- history strip ---------- */
 
-export function HistoryStrip({ match, sides, onUndo }: { match: Match; sides: SideView[]; onUndo: () => void }) {
+export function HistoryStrip({
+  match,
+  sides,
+  onUndo,
+  label = (r) => `+${r.points}`,
+  emptyLabel = 'play.noRounds',
+}: {
+  match: Match;
+  sides: SideView[];
+  onUndo: () => void;
+  /** Text for each history chip; defaults to "+points". */
+  label?: (round: Round, index: number) => string;
+  emptyLabel?: TKey;
+}) {
   const t = useT();
   const ref = useRef<HTMLDivElement>(null);
   const byId = new Map(sides.map((s) => [s.id, s]));
@@ -254,7 +281,7 @@ export function HistoryStrip({ match, sides, onUndo }: { match: Match; sides: Si
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
       <div ref={ref} style={{ flex: 1, display: 'flex', gap: 6, overflowX: 'auto', padding: '4px 2px 8px', scrollbarWidth: 'none' }}>
-        {match.rounds.length === 0 && <span className="muted" style={{ fontWeight: 800, fontSize: 14, padding: '8px 4px' }}>{t('play.noRounds')}</span>}
+        {match.rounds.length === 0 && <span className="muted" style={{ fontWeight: 800, fontSize: 14, padding: '8px 4px' }}>{t(emptyLabel)}</span>}
         <AnimatePresence initial={false}>
           {match.rounds.map((r, i) => {
             const s = byId.get(r.sideId);
@@ -280,7 +307,8 @@ export function HistoryStrip({ match, sides, onUndo }: { match: Match; sides: Si
                   color: s?.color.deep,
                 }}
               >
-                {s && s.players.length === 1 ? <Avatar player={s.players[0]} size={22} /> : <span style={{ width: 10, height: 10, borderRadius: '50%', background: s?.color.base, margin: '0 4px' }} />}+{r.points}
+                {s && s.players.length === 1 ? <Avatar player={s.players[0]} size={22} /> : <span style={{ width: 10, height: 10, borderRadius: '50%', background: s?.color.base, margin: '0 4px' }} />}
+                {label(r, i)}
               </motion.div>
             );
           })}

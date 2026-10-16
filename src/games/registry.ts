@@ -1,11 +1,12 @@
 import type { GameDefinition } from './types';
+import { gris } from './gris';
 import { petanque } from './petanque';
 
 /**
  * Every game the app knows about. To add a game, create a folder next to
- * `petanque/` exporting a GameDefinition and list it here.
+ * `petanque/` exporting a GameDefinition and list it here (see DESIGN.md).
  */
-export const GAMES: GameDefinition[] = [petanque];
+export const GAMES: GameDefinition[] = [petanque, gris];
 
 export function getGame(id: string): GameDefinition {
   const game = GAMES.find((g) => g.id === id);

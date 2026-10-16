@@ -1,11 +1,12 @@
 import type { Match } from '../games/types';
+import { getGame } from '../games/registry';
 import { sideScore } from './match';
 
 export interface PlayerStats {
   playerId: string;
   wins: number;
   played: number;
-  /** Times this player finished a game on 0 points. */
+  /** Times this player lost without scoring (game-specific, see GameDefinition.fannySides). */
   fannys: number;
   pointsFor: number;
 }
@@ -32,6 +33,7 @@ export function leaderboard(matches: Match[], filter: StatsFilter = {}): PlayerS
     return s;
   };
   for (const m of finishedMatches(matches, filter)) {
+    const fannies = new Set(getGame(m.gameId).fannySides?.(m) ?? []);
     for (const side of m.sides) {
       const score = sideScore(m, side.id);
       for (const pid of side.playerIds) {
@@ -39,7 +41,7 @@ export function leaderboard(matches: Match[], filter: StatsFilter = {}): PlayerS
         s.played++;
         s.pointsFor += score;
         if (side.id === m.winnerSideId) s.wins++;
-        else if (score === 0) s.fannys++;
+        else if (fannies.has(side.id)) s.fannys++;
       }
     }
   }

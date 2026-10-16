@@ -66,6 +66,36 @@ export const fx = {
     for (const [f, s, d] of fanfare) tone(f, s, d, 'square', 0.07);
     haptic(() => Haptics.notification({ type: NotificationType.Success }));
   },
+  /** Taking a letter / a hit: a low "bonk". */
+  stamp() {
+    tone(220, 0, 0.12, 'square', 0.09);
+    tone(165, 0.06, 0.18, 'triangle', 0.12);
+    haptic(() => Haptics.impact({ style: ImpactStyle.Heavy }));
+  },
+  /** Knocked out: a sad slide-whistle down. */
+  knockout() {
+    const a = audio();
+    haptic(() => Haptics.notification({ type: NotificationType.Error }));
+    if (!a) return;
+    const t = a.currentTime;
+    const osc = a.createOscillator();
+    const g = a.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(880, t);
+    osc.frequency.exponentialRampToValueAtTime(140, t + 0.7);
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.03);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+    osc.connect(g).connect(a.destination);
+    osc.start(t);
+    osc.stop(t + 0.85);
+  },
+  /** Camera shutter: a quick click-clack. */
+  shutter() {
+    tone(2400, 0, 0.03, 'square', 0.06);
+    tone(1200, 0.05, 0.04, 'square', 0.05);
+    haptic(() => Haptics.impact({ style: ImpactStyle.Medium }));
+  },
   error() {
     tone(200, 0, 0.15, 'sawtooth', 0.06);
     haptic(() => Haptics.notification({ type: NotificationType.Warning }));

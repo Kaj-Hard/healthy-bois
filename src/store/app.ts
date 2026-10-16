@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { Match, Side } from '../games/types';
 import { getGame } from '../games/registry';
 import { uid } from '../lib/id';
+import { deletePhoto } from '../lib/photos';
 import { deviceStorage } from '../lib/storage';
 import { detectLang, type Lang } from '../i18n';
 
@@ -27,17 +28,21 @@ export type Route =
   | { name: 'home' }
   | { name: 'players' }
   | { name: 'stats' }
+  | { name: 'library' }
   | { name: 'settings' }
   | { name: 'setup'; gameId: string }
   | { name: 'play' }
+  | { name: 'photo'; matchId: string }
   | { name: 'winner'; matchId: string };
 
-export const TAB_ROUTES = ['home', 'players', 'stats'] as const;
+export const TAB_ROUTES = ['home', 'library', 'players', 'stats'] as const;
 
 interface PersistedState {
   players: Player[];
   matches: Match[];
   activeMatchId?: string;
+  /** Game ids pinned to the home screen, in the order they were added. */
+  favorites: string[];
   settings: Settings;
 }
 
@@ -62,6 +67,8 @@ interface AppState extends PersistedState {
   reopenMatch(matchId: string): void;
   abandonMatch(): void;
   deleteMatch(matchId: string): void;
+  setMatchPhoto(matchId: string, path: string | undefined): void;
+  toggleFavorite(gameId: string): boolean;
 
   updateSettings(patch: Partial<Settings>): void;
   exportData(): string;
@@ -82,12 +89,18 @@ export const useApp = create<AppState>()(
       players: [],
       matches: [],
       activeMatchId: undefined,
+      favorites: [],
       settings: { lang: detectLang(), sound: true, haptics: true },
 
       navigate: (route) => set((s) => ({ stack: [...s.stack, route] })),
       replace: (route) => set((s) => ({ stack: [...s.stack.slice(0, -1), route] })),
       back: () => {
         const { stack } = get();
+        const top = stack[stack.length - 1];
+        if (top?.name === 'photo') {
+          set({ stack: [...stack.slice(0, -1), { name: 'winner', matchId: top.matchId }] });
+          return true;
+        }
         if (stack.length <= 1) {
           if (stack[0]?.name !== 'home') {
             set({ stack: [{ name: 'home' }] });
@@ -177,11 +190,13 @@ export const useApp = create<AppState>()(
       reopenMatch: (matchId) => {
         const match = get().matches.find((m) => m.id === matchId);
         if (!match || match.status !== 'finished') return;
+        void deletePhoto(match.photo);
         const next: Match = {
           ...match,
           status: 'active',
           winnerSideId: undefined,
           finishedAt: undefined,
+          photo: undefined,
           rounds: match.rounds.slice(0, -1),
         };
         set((s) => ({
@@ -202,13 +217,30 @@ export const useApp = create<AppState>()(
           activeMatchId: undefined,
         })),
 
-      deleteMatch: (matchId) => set((s) => ({ matches: s.matches.filter((m) => m.id !== matchId) })),
+      deleteMatch: (matchId) => {
+        void deletePhoto(get().matches.find((m) => m.id === matchId)?.photo);
+        set((s) => ({ matches: s.matches.filter((m) => m.id !== matchId) }));
+      },
+
+      setMatchPhoto: (matchId, path) => {
+        const match = get().matches.find((m) => m.id === matchId);
+        if (!match) return;
+        if (match.photo && match.photo !== path) void deletePhoto(match.photo);
+        set((s) => ({ matches: replaceMatch(s.matches, { ...match, photo: path }) }));
+      },
+
+      toggleFavorite: (gameId) => {
+        const on = !get().favorites.includes(gameId);
+        set((s) => ({ favorites: on ? [...s.favorites, gameId] : s.favorites.filter((id) => id !== gameId) }));
+        return on;
+      },
 
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
       exportData: () => {
-        const { players, matches, activeMatchId, settings } = get();
-        return JSON.stringify({ kind: BACKUP_MAGIC, version: 1, exportedAt: new Date().toISOString(), players, matches, activeMatchId, settings });
+        // Photos are files on the phone and are not part of the backup text.
+        const { players, matches, activeMatchId, favorites, settings } = get();
+        return JSON.stringify({ kind: BACKUP_MAGIC, version: 1, exportedAt: new Date().toISOString(), players, matches, activeMatchId, favorites, settings });
       },
 
       importData: (json) => {
@@ -219,6 +251,7 @@ export const useApp = create<AppState>()(
             players: data.players,
             matches: data.matches,
             activeMatchId: data.activeMatchId,
+            favorites: Array.isArray(data.favorites) ? data.favorites : get().favorites,
             settings: { ...get().settings, ...data.settings },
             stack: [{ name: 'home' }],
           });
@@ -236,6 +269,7 @@ export const useApp = create<AppState>()(
         players: s.players,
         matches: s.matches,
         activeMatchId: s.activeMatchId,
+        favorites: s.favorites,
         settings: s.settings,
       }),
       onRehydrateStorage: () => (state) => {

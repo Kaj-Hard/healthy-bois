@@ -63,7 +63,7 @@ export function PetanquePlay({ match }: PlayProps) {
     pickLock.current = true;
     setPicking(undefined);
     // Let the sheet start closing so the burst lands on the visible panel.
-    setTimeout(() => score(side, points, origin), 120);
+    setTimeout(() => score(side, points, { origin }), 120);
   };
 
   const abandon = async () => {

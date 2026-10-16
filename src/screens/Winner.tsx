@@ -1,12 +1,12 @@
 import { motion } from 'motion/react';
 import { useEffect } from 'react';
+import { Polaroid } from '../components/Polaroid';
 import { AvatarStack, bouncy } from '../components/ui';
 import { getGame } from '../games/registry';
 import { useT } from '../i18n';
 import { celebrate } from '../lib/confetti';
 import { fx } from '../lib/feedback';
 import { uid } from '../lib/id';
-import { sideScore, standings } from '../lib/match';
 import { winsFor } from '../lib/stats';
 import { useApp, usePlayersById } from '../store/app';
 
@@ -18,6 +18,7 @@ export function Winner({ matchId }: { matchId: string }) {
   const navigate = useApp((s) => s.navigate);
   const reopenMatch = useApp((s) => s.reopenMatch);
   const startMatch = useApp((s) => s.startMatch);
+  const replace = useApp((s) => s.replace);
   const playersById = usePlayersById();
 
   const game = match ? getGame(match.gameId) : undefined;
@@ -33,9 +34,10 @@ export function Winner({ matchId }: { matchId: string }) {
 
   const winnerSide = match.sides.find((s) => s.id === match.winnerSideId)!;
   const winners = winnerSide.playerIds.map((id) => playersById.get(id));
-  const ranking = standings(match);
-  const losersOnZero = match.sides.filter((s) => s.id !== winnerSide.id && sideScore(match, s.id) === 0);
+  const ranking = game.ranking(match);
+  const losersOnZero = (game.fannySides?.(match) ?? []).map((id) => match.sides.find((s) => s.id === id)!);
   const fanny = losersOnZero.length > 0;
+  const flawless = game.flawless?.(match) ?? false;
   const minutes = Math.max(1, Math.round(((match.finishedAt ?? Date.now()) - match.startedAt) / 60000));
   const v = game.theme.vars;
 
@@ -60,7 +62,7 @@ export function Winner({ matchId }: { matchId: string }) {
   return (
     <div className="scroll" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 'calc(var(--safe-top) + 24px)', textAlign: 'center' }}>
       {/* rotating sun rays */}
-      <div style={{ position: 'relative', width: 260, height: 220, display: 'grid', placeItems: 'center' }}>
+      <div style={{ position: 'relative', width: 260, minHeight: match.photo ? 300 : 220, display: 'grid', placeItems: 'center' }}>
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 24, ease: 'linear' }}
@@ -74,14 +76,28 @@ export function Winner({ matchId }: { matchId: string }) {
             WebkitMaskImage: 'radial-gradient(circle, #000 30%, transparent 70%)',
           }}
         />
-        <motion.div
-          initial={{ scale: 0, rotate: -40, y: 60 }}
-          animate={{ scale: 1, rotate: 0, y: 0 }}
-          transition={{ ...bouncy, delay: 0.1 }}
-          style={{ fontSize: 110, filter: 'drop-shadow(0 8px 0 rgba(0,0,0,.12))' }}
-        >
-          🏆
-        </motion.div>
+        {match.photo ? (
+          <div style={{ position: 'relative' }}>
+            <Polaroid path={match.photo} width={190} delay={0.1} />
+            <motion.span
+              initial={{ scale: 0, rotate: 30 }}
+              animate={{ scale: 1, rotate: 12 }}
+              transition={{ ...bouncy, delay: 0.6 }}
+              style={{ position: 'absolute', right: -26, top: -18, fontSize: 56, filter: 'drop-shadow(0 4px 0 rgba(0,0,0,.12))' }}
+            >
+              🏆
+            </motion.span>
+          </div>
+        ) : (
+          <motion.div
+            initial={{ scale: 0, rotate: -40, y: 60 }}
+            animate={{ scale: 1, rotate: 0, y: 0 }}
+            transition={{ ...bouncy, delay: 0.1 }}
+            style={{ fontSize: 110, filter: 'drop-shadow(0 8px 0 rgba(0,0,0,.12))' }}
+          >
+            🏆
+          </motion.div>
+        )}
       </div>
 
       <motion.h1
@@ -98,6 +114,31 @@ export function Winner({ matchId }: { matchId: string }) {
         <AvatarStack players={winners} size={72} />
         <p style={{ fontSize: 26, fontWeight: 900 }}>{winners.map((p) => p?.name).join(' & ')}</p>
       </motion.div>
+
+      {!match.photo && (
+        <motion.button
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ ...bouncy, delay: 0.7 }}
+          className="btn small accent"
+          style={{ marginTop: 14 }}
+          onClick={() => { fx.tap(); replace({ name: 'photo', matchId: match.id }); }}
+        >
+          📸 {t('photo.add')}
+        </motion.button>
+      )}
+
+      {flawless && (
+        <motion.div
+          initial={{ scale: 0, rotate: -20 }}
+          animate={{ scale: 1, rotate: 4 }}
+          transition={{ ...bouncy, delay: 0.9 }}
+          style={{ marginTop: 16, padding: '10px 18px', borderRadius: 18, background: 'var(--primary)', color: '#fff', boxShadow: '0 5px 0 var(--primary-deep)' }}
+        >
+          <div style={{ fontSize: 28, fontWeight: 900 }}>✨ {t('win.flawless')}</div>
+          <div style={{ fontWeight: 800 }}>{t('win.flawlessSub')}</div>
+        </motion.div>
+      )}
 
       {fanny && (
         <motion.div
@@ -122,7 +163,7 @@ export function Winner({ matchId }: { matchId: string }) {
         className="card"
         style={{ width: '100%', marginTop: 22, overflow: 'hidden', textAlign: 'left' }}
       >
-        {ranking.map(({ sideId, score }, i) => {
+        {ranking.map((sideId, i) => {
           const side = match.sides.find((s) => s.id === sideId)!;
           const ps = side.playerIds.map((id) => playersById.get(id));
           return (
@@ -130,7 +171,7 @@ export function Winner({ matchId }: { matchId: string }) {
               <span style={{ width: 26, fontWeight: 900, color: 'var(--ink-soft)' }}>{i === 0 ? '👑' : i + 1}</span>
               <AvatarStack players={ps} size={34} />
               <span className="name" style={{ flex: 1, fontSize: 16 }}>{ps.map((p) => p?.name).join(' & ')}</span>
-              <span style={{ fontWeight: 900, fontSize: 24 }}>{score}</span>
+              <span style={{ fontWeight: 900, fontSize: 22, letterSpacing: '0.04em' }}>{game.scoreText(match, sideId)}</span>
             </div>
           );
         })}
@@ -147,7 +188,7 @@ export function Winner({ matchId }: { matchId: string }) {
           );
         })}
         <p className="muted" style={{ fontWeight: 700, fontSize: 14 }}>
-          {t('win.ends', { n: match.rounds.length })} · {t('win.duration', { n: minutes })}
+          {t(game.roundsLabel ?? 'win.ends', { n: match.rounds.length })} · {t('win.duration', { n: minutes })}
         </p>
       </motion.div>
 

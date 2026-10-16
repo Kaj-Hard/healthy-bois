@@ -1,6 +1,7 @@
 import { useId } from 'react';
 import type { GameDefinition } from '../types';
-import { maxPointsPerRound, modes, winnerOf } from './rules';
+import { sideScore, standings } from '../../lib/match';
+import { modes, winnerOf } from './rules';
 import { PetanquePlay } from './Play';
 import { theme } from './theme';
 
@@ -36,10 +37,16 @@ export const petanque: GameDefinition = {
   id: 'petanque',
   name: 'petanque.name',
   tagline: 'petanque.tagline',
+  blurb: 'petanque.blurb',
+  duration: 'petanque.duration',
+  tags: ['outdoor', 'ball', 'teams', 'ffa'],
   theme,
   modes,
   Art: BouleArt,
   Play: PetanquePlay,
-  maxPointsPerRound,
   winnerOf,
+  ranking: (match) => standings(match).map((s) => s.sideId),
+  scoreText: (match, sideId) => String(sideScore(match, sideId)),
+  fannySides: (match) =>
+    match.sides.filter((s) => s.id !== match.winnerSideId && sideScore(match, s.id) === 0).map((s) => s.id),
 };

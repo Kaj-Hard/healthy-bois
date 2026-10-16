@@ -7,6 +7,8 @@ import { getGame } from './games/registry';
 import { useT } from './i18n';
 import { fx } from './lib/feedback';
 import { Home } from './screens/Home';
+import { Library } from './screens/Library';
+import { Photo } from './screens/Photo';
 import { Players } from './screens/Players';
 import { Settings } from './screens/Settings';
 import { Setup } from './screens/Setup';
@@ -19,10 +21,12 @@ const BASE_THEME: Record<string, string> = {};
 /** Which game's theme should be painted for the current route (undefined = app theme). */
 function useThemeGameId(route: Route): string | undefined {
   const active = useActiveMatch();
-  const winnerGame = useApp((s) => (route.name === 'winner' ? s.matches.find((m) => m.id === route.matchId)?.gameId : undefined));
+  const matchGame = useApp((s) =>
+    route.name === 'winner' || route.name === 'photo' ? s.matches.find((m) => m.id === route.matchId)?.gameId : undefined,
+  );
   if (route.name === 'setup') return route.gameId;
   if (route.name === 'play') return active?.gameId;
-  if (route.name === 'winner') return winnerGame;
+  if (route.name === 'winner' || route.name === 'photo') return matchGame;
   return undefined;
 }
 
@@ -60,12 +64,16 @@ function renderRoute(route: Route) {
       return <Players />;
     case 'stats':
       return <Stats />;
+    case 'library':
+      return <Library />;
     case 'settings':
       return <Settings />;
     case 'setup':
       return <Setup gameId={route.gameId} />;
     case 'play':
       return <PlayRoute />;
+    case 'photo':
+      return <Photo matchId={route.matchId} />;
     case 'winner':
       return <Winner matchId={route.matchId} />;
   }
@@ -76,6 +84,7 @@ function TabBar({ current }: { current: Route['name'] }) {
   const resetTo = useApp((s) => s.resetTo);
   const tabs = [
     { name: 'home', icon: '🎯', label: t('nav.play') },
+    { name: 'library', icon: '🎲', label: t('nav.library') },
     { name: 'players', icon: '👥', label: t('nav.players') },
     { name: 'stats', icon: '🏆', label: t('nav.stats') },
   ] as const;

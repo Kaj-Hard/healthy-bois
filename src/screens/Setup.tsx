@@ -37,7 +37,8 @@ export function Setup({ gameId }: { gameId: string }) {
   const [step, setStep] = useState<Step>(game.modes.length === 1 ? 'players' : 'mode');
   const [modeId, setModeId] = useState(game.modes[0].id);
   const mode = game.modes.find((m) => m.id === modeId)!;
-  const [selected, setSelected] = useState<string[]>([]);
+  // Single-mode games (GRIS) skip the mode step, so pre-select last time's bois right away.
+  const [selected, setSelected] = useState<string[]>(() => (game.modes.length === 1 ? lastPlayers(game.modes[0]) : []));
   const [teams, setTeams] = useState<[string[], string[]]>([[], []]);
   const [editorOpen, setEditorOpen] = useState(false);
   const [shake, setShake] = useState(0);
@@ -45,16 +46,19 @@ export function Setup({ gameId }: { gameId: string }) {
   const maxCount = Math.max(...mode.playerCounts);
   const validCount = mode.playerCounts.includes(selected.length);
 
-  const lastLineup = (mId: string) =>
-    [...matches].reverse().find((m) => m.gameId === gameId && m.modeId === mId && m.status !== 'abandoned');
+  function lastPlayers(m: GameMode): string[] {
+    const ids = lastLineup(m.id)?.sides.flatMap((s) => s.playerIds).filter((id) => players.some((p) => p.id === id)) ?? [];
+    return m.playerCounts.includes(ids.length) ? ids : [];
+  }
 
+  function lastLineup(mId: string) {
+    return [...matches].reverse().find((m) => m.gameId === gameId && m.modeId === mId && m.status !== 'abandoned');
+  }
   const chooseMode = (m: GameMode) => {
     fx.select();
     setModeId(m.id);
     // Pre-select whoever played this mode last time: usually the same bois.
-    const last = lastLineup(m.id);
-    const ids = last?.sides.flatMap((s) => s.playerIds).filter((id) => players.some((p) => p.id === id)) ?? [];
-    setSelected(m.playerCounts.includes(ids.length) ? ids : []);
+    setSelected(lastPlayers(m));
     setStep('players');
   };
 
@@ -122,7 +126,7 @@ export function Setup({ gameId }: { gameId: string }) {
           </span>
         }
       />
-      <StepDots step={step} hasTeams={mode.teams && step !== 'mode'} />
+      <StepDots step={step} hasMode={game.modes.length > 1} hasTeams={mode.teams && step !== 'mode'} />
 
       <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
         <AnimatePresence mode="popLayout" initial={false}>
@@ -376,8 +380,8 @@ export function Setup({ gameId }: { gameId: string }) {
   );
 }
 
-function StepDots({ step, hasTeams }: { step: Step; hasTeams: boolean }) {
-  const steps: Step[] = hasTeams ? ['mode', 'players', 'teams'] : ['mode', 'players'];
+function StepDots({ step, hasMode, hasTeams }: { step: Step; hasMode: boolean; hasTeams: boolean }) {
+  const steps = (['mode', 'players', 'teams'] as Step[]).filter((s) => (s !== 'mode' || hasMode) && (s !== 'teams' || hasTeams));
   const idx = steps.indexOf(step);
   return (
     <div style={{ display: 'flex', gap: 6, padding: '0 16px 10px' }}>
