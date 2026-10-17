@@ -32,9 +32,11 @@ npm run serve:apk    # LAN download page on :8080 for installing on the phone
 
 ## Versions
 
-- Releases are `MAJOR.MINOR.PATCH` (0.3.0). **Hotfixes add a letter: 0.3.0a, 0.3.0b, …** (0.3.1 shipped once and counts as 0.3.0a).
+- Releases are `MAJOR.MINOR.PATCH` (0.3.0). **Hotfixes add a letter: 0.3.0a, 0.3.0b, …**.
 - Bump three places per build: `package.json` `version` (semver form `0.3.0-b`; Vite shows it as `0.3.0b`),
-  and `android/app/build.gradle` `versionName` (`"0.3.0b"`) plus `versionCode` (+1 every build, never reused).
+  and `android/app/build.gradle` `versionName` (`"0.3.0b"`) plus `versionCode` (+1 every build, never reused,
+  even if a version name is re-used: Android refuses to install a lower versionCode over a higher one).
+- `npm run android:apk` writes `release/healthy-bois-<version>.apk` (to share) and `release/healthy-bois.apk` (served by `serve:apk`).
 
 ## Gotchas
 

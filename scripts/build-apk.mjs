@@ -1,11 +1,11 @@
 // Builds the web bundle, syncs it into the Android project and assembles an APK.
-// Output: release/healthy-bois.apk
+// Output: release/healthy-bois-<version>.apk (to share) + release/healthy-bois.apk (for serve:apk)
 //
 // Toolchain lookup (override with env vars):
 //   ANDROID_HOME / ANDROID_SDK_ROOT  -> defaults to %LOCALAPPDATA%\Android\Sdk
 //   JAVA_HOME (JDK 21+)              -> defaults to the newest %LOCALAPPDATA%\Android\jdk-21* folder
 import { execSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
@@ -38,4 +38,8 @@ run(`"${join(androidDir, isWin ? 'gradlew.bat' : 'gradlew')}" assembleDebug --co
 const apk = join(root, 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-debug.apk');
 mkdirSync(join(root, 'release'), { recursive: true });
 copyFileSync(apk, join(root, 'release', 'healthy-bois.apk'));
-console.log(`\n✅ APK ready: release/healthy-bois.apk`);
+// A versioned copy for sharing (Drive etc.), named like the app shows it: 0.3.0-a → 0.3.0a.
+const version = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8')).version.replace(/-([a-z])$/, '$1');
+const named = `healthy-bois-${version}.apk`;
+copyFileSync(apk, join(root, 'release', named));
+console.log(`\n✅ APK ready: release/${named} (and release/healthy-bois.apk)`);

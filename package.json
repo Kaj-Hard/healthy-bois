@@ -1,7 +1,7 @@
 {
   "name": "healthy-bois",
   "private": true,
-  "version": "0.3.0-b",
+  "version": "0.3.0-a",
   "type": "module",
   "description": "Offline local scorekeeping for games with the bois",
   "scripts": {
