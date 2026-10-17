@@ -159,7 +159,8 @@ export default function App() {
         </motion.div>
       </AnimatePresence>
       <AnimatePresence>{isTab && <TabBar key="tabs" current={route.name} />}</AnimatePresence>
-      <div data-skin={themeGameId}>
+      {/* Sheets portal in here so they sit above the tab bar; data-skin keeps game sheets in their skin. */}
+      <div id="overlay-root" data-skin={themeGameId}>
         <Overlays />
       </div>
     </div>

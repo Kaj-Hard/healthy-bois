@@ -145,7 +145,9 @@ and both can be switched off in Settings.
 - 16 px side gutter. Content scrolls inside `.scroll`. The primary CTA lives in `.bottom-bar` (fades into the background).
 - Respect safe areas: `var(--safe-top)` / `var(--safe-bottom)` (Capacitor injects the insets).
 - The tab bar floats above content (Play · Games · Bois · Glory). It shows only on the four root tabs, never inside a game.
-- Bottom sheets (`Sheet`) for every in-context choice: drag down or tap the backdrop to dismiss.
+- Bottom sheets (`Sheet`) for every in-context choice: drag the grip down or tap the backdrop to dismiss. Sheet content scrolls;
+  if a sheet has a primary action and can grow tall (forms, pickers), pass it as `footer` so it stays pinned above the
+  system navigation bar. Test sheets on a short screen (412×700): phones with 3-button navigation lose a lot of height.
 - During play the scoring targets fill the screen; chrome is limited to a top bar, a status pill and the history strip.
 
 ## 10. Adding a game (theme recipe and checklist)

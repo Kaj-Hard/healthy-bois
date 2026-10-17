@@ -80,7 +80,23 @@ export function PlayerEditor({ open, player, onClose, onSaved }: Props) {
   const preview: Player = { id: 'preview', name: trimmed, emoji, color, createdAt: 0 };
 
   return (
-    <Sheet open={open} onClose={onClose}>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      footer={
+        // Pinned so Save is always reachable, even when the face grid doesn't fit the screen.
+        <div style={{ display: 'flex', gap: 12 }}>
+          {player && (
+            <button className="btn ghost" style={{ ['--t' as string]: 'var(--danger-deep)' }} onClick={remove}>
+              {t('common.delete')}
+            </button>
+          )}
+          <button className="btn block" disabled={!valid} onClick={save} style={{ flex: 1 }}>
+            {t('common.save')}
+          </button>
+        </div>
+      }
+    >
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
         <motion.div key={emoji + color} initial={{ scale: 0.5, rotate: -20 }} animate={{ scale: 1, rotate: 0 }} transition={bouncy}>
           <Avatar player={preview} size={72} />
@@ -154,16 +170,6 @@ export function PlayerEditor({ open, player, onClose, onSaved }: Props) {
         ))}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, marginTop: 24 }}>
-        {player && (
-          <button className="btn ghost" style={{ ['--t' as string]: 'var(--danger-deep)' }} onClick={remove}>
-            {t('common.delete')}
-          </button>
-        )}
-        <button className="btn block" disabled={!valid} onClick={save} style={{ flex: 1 }}>
-          {t('common.save')}
-        </button>
-      </div>
     </Sheet>
   );
 }

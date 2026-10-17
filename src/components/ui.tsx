@@ -1,5 +1,6 @@
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useDragControls } from 'motion/react';
 import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { create } from 'zustand';
 import { colorOf } from '../lib/palette';
 import type { Player } from '../store/app';
@@ -110,8 +111,15 @@ export function TopBar({ title, onBack, right }: { title?: ReactNode; onBack?: (
 
 /* ---------- bottom sheet ---------- */
 
-export function Sheet({ open, onClose, children }: { open: boolean; onClose: () => void; children: ReactNode }) {
-  return (
+/**
+ * Bottom sheet. Only the grip area drags it closed, so long content scrolls normally.
+ * `footer` stays pinned at the bottom (above the system navigation bar): put the sheet's
+ * primary action there so it is reachable on short screens.
+ */
+export function Sheet({ open, onClose, children, footer }: { open: boolean; onClose: () => void; children: ReactNode; footer?: ReactNode }) {
+  const drag = useDragControls();
+  // Rendered at the top level: inside a screen, the screen's transform would trap the sheet under the tab bar.
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -131,18 +139,24 @@ export function Sheet({ open, onClose, children }: { open: boolean; onClose: () 
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 420, damping: 36 }}
             drag="y"
+            dragControls={drag}
+            dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.6 }}
             onDragEnd={(_, info) => {
               if (info.offset.y > 120 || info.velocity.y > 600) onClose();
             }}
           >
-            <div className="sheet-grip" />
-            {children}
+            <div className="sheet-handle" onPointerDown={(e) => drag.start(e)}>
+              <div className="sheet-grip" />
+            </div>
+            <div className={`sheet-body ${footer ? 'has-footer' : ''}`}>{children}</div>
+            {footer && <div className="sheet-footer">{footer}</div>}
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.getElementById('overlay-root') ?? document.body,
   );
 }
 
