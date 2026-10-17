@@ -99,9 +99,10 @@ JSON-serialisable.
 
 1. Update DESIGN.md (§3 theme table, §12 skin table) and the README game table.
 2. Bump the version as described in CLAUDE.md → Versions (a new game is a minor release, e.g. 0.4.0; fixes get a letter, e.g. 0.4.0a).
-3. `npm run android:apk`, then `npm run serve:apk` in the background and give the user the LAN URL
-   (http://<pc-ip>:8080; the server prints it).
-4. Commit with a descriptive message. Don't push unless asked.
+3. Add a `## <version>` section to CHANGELOG.md (what players will notice, in plain words).
+4. Commit and push, then `npm run release`: it builds the APK and publishes a GitHub release. Testers always get the
+   newest build from https://github.com/Kaj-Hard/healthy-bois/releases/latest/download/healthy-bois.apk
+   (`npm run serve:apk` still works for a quick LAN install).
 
 ## Quality bar (check before you call it done)
 
