@@ -1,6 +1,6 @@
 import { App as CapApp } from '@capacitor/app';
 import { Capacitor, SystemBars, SystemBarsStyle } from '@capacitor/core';
-import { AnimatePresence, motion } from 'motion/react';
+import { AnimatePresence, motion, useIsPresent, type HTMLMotionProps } from 'motion/react';
 import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Overlays, spring } from './components/ui';
 import { getGame } from './games/registry';
@@ -79,6 +79,12 @@ function renderRoute(route: Route) {
   }
 }
 
+/** A screen that is animating out ignores taps, so a quick double-tap can't act twice. */
+function ScreenFrame(props: HTMLMotionProps<'div'> & { 'data-skin'?: string }) {
+  const present = useIsPresent();
+  return <motion.div {...props} style={{ ...props.style, pointerEvents: present ? undefined : 'none' }} />;
+}
+
 function TabBar({ current }: { current: Route['name'] }) {
   const t = useT();
   const resetTo = useApp((s) => s.resetTo);
@@ -144,7 +150,7 @@ export default function App() {
   return (
     <div className="shell">
       <AnimatePresence initial={false}>
-        <motion.div
+        <ScreenFrame
           key={key}
           className={`screen ${isTab ? 'with-tabs' : ''}`}
           // Bespoke skin: games/<id>/skin.css targets [data-skin='<id>']. It lives on the screen (not the root)
@@ -156,7 +162,7 @@ export default function App() {
           transition={isTab ? { duration: 0.18 } : { type: 'spring', stiffness: 380, damping: 38 }}
         >
           {renderRoute(route)}
-        </motion.div>
+        </ScreenFrame>
       </AnimatePresence>
       <AnimatePresence>{isTab && <TabBar key="tabs" current={route.name} />}</AnimatePresence>
       {/* Sheets portal in here so they sit above the tab bar; data-skin keeps game sheets in their skin. */}

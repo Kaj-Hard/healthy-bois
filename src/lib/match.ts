@@ -17,3 +17,13 @@ export function standings(match: Match): { sideId: string; score: number }[] {
     .map((s) => ({ sideId: s.id, score: sideScore(match, s.id) }))
     .sort((a, b) => b.score - a.score);
 }
+
+/**
+ * One game in progress per game type: starting a new pétanque abandons the unfinished pétanque
+ * (or drops it if nothing was scored yet), while a GRIS game in progress is left alone.
+ */
+export function replaceSameGame(matches: Match[], gameId: string): Match[] {
+  return matches
+    .filter((m) => !(m.status === 'active' && m.gameId === gameId && m.rounds.length === 0))
+    .map((m) => (m.status === 'active' && m.gameId === gameId ? { ...m, status: 'abandoned' as const } : m));
+}

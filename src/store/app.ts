@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import type { Match, Side } from '../games/types';
 import { getGame } from '../games/registry';
 import { uid } from '../lib/id';
+import { replaceSameGame } from '../lib/match';
 import { deletePhoto } from '../lib/photos';
 import { deviceStorage } from '../lib/storage';
 import { detectLang, type Lang } from '../i18n';
@@ -40,6 +41,10 @@ export const TAB_ROUTES = ['home', 'library', 'players', 'stats'] as const;
 interface PersistedState {
   players: Player[];
   matches: Match[];
+  /**
+   * The in-progress match the Play screen shows. Several games can be in progress at once
+   * (one per game type); this is just the one that's open.
+   */
   activeMatchId?: string;
   /** Game ids pinned to the home screen, in the order they were added. */
   favorites: string[];
@@ -60,6 +65,8 @@ interface AppState extends PersistedState {
   removePlayer(id: string): void;
 
   startMatch(input: { gameId: string; modeId: string; sides: Side[] }): Match;
+  /** Open an in-progress match on the Play screen. */
+  resumeMatch(matchId: string): void;
   setFirstSide(sideId: string): void;
   scoreRound(sideId: string, points: number): Match | undefined;
   undoRound(): Match | undefined;
@@ -146,14 +153,15 @@ export const useApp = create<AppState>()(
           startedAt: Date.now(),
         };
         set((s) => ({
-          // Only one game can run at a time; a still-active one is abandoned.
-          matches: [
-            ...s.matches.map((m) => (m.status === 'active' ? { ...m, status: 'abandoned' as const } : m)),
-            match,
-          ],
+          // One game in progress per game type: a new pétanque replaces the old pétanque, GRIS keeps going.
+          matches: [...replaceSameGame(s.matches, gameId), match],
           activeMatchId: match.id,
         }));
         return match;
+      },
+
+      resumeMatch: (matchId) => {
+        if (get().matches.some((m) => m.id === matchId && m.status === 'active')) set({ activeMatchId: matchId });
       },
 
       setFirstSide: (sideId) => {
@@ -200,10 +208,7 @@ export const useApp = create<AppState>()(
           rounds: match.rounds.slice(0, -1),
         };
         set((s) => ({
-          matches: replaceMatch(
-            s.matches.map((m) => (m.status === 'active' ? { ...m, status: 'abandoned' as const } : m)),
-            next,
-          ),
+          matches: replaceMatch(replaceSameGame(s.matches, match.gameId), next),
           activeMatchId: next.id,
         }));
       },
@@ -285,6 +290,18 @@ export const useApp = create<AppState>()(
 
 export function useActiveMatch(): Match | undefined {
   return useApp((s) => s.matches.find((m) => m.id === s.activeMatchId));
+}
+
+/** Every game in progress, most recently played first. */
+export function useMatchesInProgress(): Match[] {
+  const matches = useApp((s) => s.matches);
+  return useMemo(
+    () =>
+      matches
+        .filter((m) => m.status === 'active')
+        .sort((a, b) => (b.rounds.at(-1)?.at ?? b.startedAt) - (a.rounds.at(-1)?.at ?? a.startedAt)),
+    [matches],
+  );
 }
 
 export function usePlayersById(): Map<string, Player> {

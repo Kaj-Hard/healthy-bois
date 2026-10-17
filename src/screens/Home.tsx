@@ -4,14 +4,14 @@ import { AvatarStack, Icon, bouncy } from '../components/ui';
 import { GAMES, getGame } from '../games/registry';
 import { useT } from '../i18n';
 import { fx } from '../lib/feedback';
-import { useActiveMatch, useApp, usePlayersById } from '../store/app';
+import { useApp, useMatchesInProgress, usePlayersById } from '../store/app';
 import type { Match } from '../games/types';
 
 export function Home() {
   const t = useT();
   const navigate = useApp((s) => s.navigate);
   const players = useApp((s) => s.players).filter((p) => !p.archived);
-  const active = useActiveMatch();
+  const inProgress = useMatchesInProgress();
 
   return (
     <div className="scroll">
@@ -35,9 +35,14 @@ export function Home() {
         </button>
       </div>
 
-      {active && <ResumeCard match={active} />}
+      {/* Every unfinished game, newest first: you can have a pétanque and a GRIS going at the same time. */}
+      <AnimatePresence initial={false}>
+        {inProgress.map((m) => (
+          <ResumeCard key={m.id} match={m} />
+        ))}
+      </AnimatePresence>
 
-      {players.length < 2 && !active && (
+      {players.length < 2 && inProgress.length === 0 && (
         <motion.button
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -136,7 +141,7 @@ function ResumeCard({ match }: { match: Match }) {
         animate={{ opacity: 1, scale: 1 }}
         transition={bouncy}
         whileTap={{ scale: 0.97 }}
-        onClick={() => { fx.select(); navigate({ name: 'play' }); }}
+        onClick={() => { fx.select(); useApp.getState().resumeMatch(match.id); navigate({ name: 'play' }); }}
         style={{
           width: '100%',
           marginTop: 14,

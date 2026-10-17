@@ -71,6 +71,7 @@ export function Winner({ matchId }: { matchId: string }) {
             width: 340,
             height: 340,
             borderRadius: '50%',
+            willChange: 'transform',
             background: `repeating-conic-gradient(${v['--primary']}33 0deg 12deg, transparent 12deg 24deg)`,
             maskImage: 'radial-gradient(circle, #000 30%, transparent 70%)',
             WebkitMaskImage: 'radial-gradient(circle, #000 30%, transparent 70%)',

@@ -81,7 +81,9 @@ export const da: Record<TKey, string> = {
   'play.keepPlaying': 'Spil videre',
   'play.leader': 'Fører',
   'play.noRounds': 'Ingen runder spillet endnu',
-  'play.alreadyActive': 'Der er allerede en kamp i gang. Afbryd den og start en ny?',
+  'setup.replaceActive': 'Du har en {game}-kamp i gang. Start en ny i stedet? (Dine andre spil fortsætter som de er.)',
+  'setup.startNew': 'Start ny',
+  'home.inProgress': 'I gang',
 
   'win.title': 'Vinder!',
   'win.titleTeam': 'Vindere!',

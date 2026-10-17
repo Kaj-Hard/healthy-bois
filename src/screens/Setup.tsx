@@ -28,7 +28,6 @@ export function Setup({ gameId }: { gameId: string }) {
   const game = getGame(gameId);
   const allPlayers = useApp((s) => s.players);
   const matches = useApp((s) => s.matches);
-  const activeMatchId = useApp((s) => s.activeMatchId);
   const back = useApp((s) => s.back);
   const startMatch = useApp((s) => s.startMatch);
   const resetTo = useApp((s) => s.resetTo);
@@ -95,8 +94,9 @@ export function Setup({ gameId }: { gameId: string }) {
   };
 
   const start = async (groups: string[][]) => {
-    if (activeMatchId) {
-      const ok = await useOverlay.getState().ask(t('play.alreadyActive'), t('setup.start'), true);
+    // Other games in progress are left alone; only an unfinished game of this same type gets replaced.
+    if (matches.some((m) => m.status === 'active' && m.gameId === gameId)) {
+      const ok = await useOverlay.getState().ask(t('setup.replaceActive', { game: t(game.name) }), t('setup.startNew'), true);
       if (!ok) return;
     }
     fx.score(3);

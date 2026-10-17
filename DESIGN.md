@@ -40,6 +40,10 @@ Home (♥ favourites) / Games library
   → Hall of Glory: podium, leaderboard per game & mode, recent games with photos
 ```
 
+**Games in progress:** one per game type can be unfinished at the same time (a pétanque and a GRIS can both be
+going). Home shows each as a resume card, and game cards show an "In progress" badge. Starting a new game of the
+same type asks before replacing the old one; other types are never touched.
+
 New games plug into this flow. They own only their **Play** screen, rules, theme and art (see §10).
 
 ## 3. Colour

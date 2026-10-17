@@ -79,7 +79,9 @@ export const en = {
   'play.keepPlaying': 'Keep playing',
   'play.leader': 'Leader',
   'play.noRounds': 'No ends played yet',
-  'play.alreadyActive': 'A game is already in progress. Abandon it and start a new one?',
+  'setup.replaceActive': 'You have a {game} game in progress. Start a new one instead? (Your other games stay as they are.)',
+  'setup.startNew': 'Start new',
+  'home.inProgress': 'In progress',
 
   'win.title': 'Winner!',
   'win.titleTeam': 'Winners!',

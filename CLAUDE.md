@@ -30,6 +30,12 @@ npm run android:apk  # build release/healthy-bois.apk (SDK + JDK 21 under %LOCAL
 npm run serve:apk    # LAN download page on :8080 for installing on the phone
 ```
 
+## Versions
+
+- Releases are `MAJOR.MINOR.PATCH` (0.3.0). **Hotfixes add a letter: 0.3.0a, 0.3.0b, …** (0.3.1 shipped once and counts as 0.3.0a).
+- Bump three places per build: `package.json` `version` (semver form `0.3.0-b`; Vite shows it as `0.3.0b`),
+  and `android/app/build.gradle` `versionName` (`"0.3.0b"`) plus `versionCode` (+1 every build, never reused).
+
 ## Gotchas
 
 - Write files that contain non-ASCII (Danish text, emoji) with the Write/Edit tools, not bash heredocs. Heredocs have truncated them.

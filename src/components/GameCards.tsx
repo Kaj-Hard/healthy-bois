@@ -17,6 +17,25 @@ export function usePlayCounts(): Map<string, number> {
   }, [matches]);
 }
 
+/** True while a match of this game is unfinished (it's waiting on the Home screen). */
+function useInProgress(gameId: string): boolean {
+  return useApp((s) => s.matches.some((m) => m.status === 'active' && m.gameId === gameId));
+}
+
+function LiveBadge({ onDark }: { onDark?: boolean }) {
+  const t = useT();
+  return (
+    <span className="badge" style={{ background: onDark ? '#ffffff' : 'var(--ink)', color: onDark ? '#2d2547' : '#ffffff', gap: 6 }}>
+      <motion.span
+        animate={{ scale: [1, 1.35, 1], opacity: [1, 0.6, 1] }}
+        transition={{ repeat: Infinity, duration: 1.4 }}
+        style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff5c7a' }}
+      />
+      {t('home.inProgress')}
+    </span>
+  );
+}
+
 function startSetup(gameId: string) {
   fx.select();
   useApp.getState().navigate({ name: 'setup', gameId });
@@ -28,6 +47,7 @@ function startSetup(gameId: string) {
  */
 export function HeroGameCard({ game, index = 0 }: { game: GameDefinition; index?: number }) {
   const t = useT();
+  const live = useInProgress(game.id);
   const v = game.theme.vars;
   return (
     <motion.div
@@ -72,6 +92,7 @@ export function HeroGameCard({ game, index = 0 }: { game: GameDefinition; index?
         {t(game.tagline)}
       </span>
       <span style={{ position: 'relative', display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap', maxWidth: '62%' }}>
+        {live && <LiveBadge onDark />}
         {game.modes.map((m) => (
           <span key={m.id} className="badge" style={{ background: 'rgba(255,255,255,.25)', color: '#fff' }}>
             {m.emoji} {t(m.name)}
@@ -85,6 +106,7 @@ export function HeroGameCard({ game, index = 0 }: { game: GameDefinition; index?
 /** Compact library row: art tile, name, facts, ♥. */
 export function GameRow({ game, plays, index = 0 }: { game: GameDefinition; plays: number; index?: number }) {
   const t = useT();
+  const live = useInProgress(game.id);
   const v = game.theme.vars;
   const [min, max] = playerRange(game);
   return (
@@ -118,7 +140,8 @@ export function GameRow({ game, plays, index = 0 }: { game: GameDefinition; play
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
           <span className="name" style={{ fontSize: 19 }}>{t(game.name)}</span>
-          {plays === 0 && (
+          {live && <LiveBadge />}
+          {!live && plays === 0 && (
             <span className="badge" style={{ background: v['--accent'], color: '#fff', padding: '2px 8px' }}>{t('library.new')}</span>
           )}
         </div>
