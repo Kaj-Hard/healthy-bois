@@ -30,6 +30,11 @@ npm run dev        # browser at http://localhost:5173 (use phone-size devtools)
 npm test           # rules + leaderboard unit tests
 ```
 
+## Install
+
+Download the newest build on your Android phone: **https://github.com/Kaj-Hard/healthy-bois/releases/latest/download/healthy-bois.apk**
+(all versions on the [releases page](https://github.com/Kaj-Hard/healthy-bois/releases)).
+
 ## Build and install on Android
 
 Needs the Android SDK and JDK 21. `scripts/build-apk.mjs` finds them in
@@ -38,6 +43,7 @@ Needs the Android SDK and JDK 21. `scripts/build-apk.mjs` finds them in
 ```bash
 npm run android:apk   # -> release/healthy-bois.apk
 npm run serve:apk     # serves a download page on your LAN, port 8080
+npm run release       # builds and publishes a GitHub release (notes from CHANGELOG.md)
 ```
 
 Open the printed URL on the phone, download, and install. New builds install over the old app and keep

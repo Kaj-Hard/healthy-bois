@@ -28,6 +28,7 @@ npm test             # vitest: game rules + leaderboard
 npx tsc -b           # type-check
 npm run android:apk  # build release/healthy-bois.apk (SDK + JDK 21 under %LOCALAPPDATA%\Android)
 npm run serve:apk    # LAN download page on :8080 for installing on the phone
+npm run release      # build + publish a GitHub release (needs a CHANGELOG.md section for the version, gh logged in)
 ```
 
 ## Versions
